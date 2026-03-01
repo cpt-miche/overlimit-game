@@ -78,7 +78,7 @@ func _match_player_action(action_id: StringName) -> bool:
 
 func _resolve_enemy_turn() -> void:
 	state.enemy.guarding = false
-	var action := enemy_ai.choose_action(state.enemy, attacks, transformations)
+	var action := enemy_ai.choose_action(state.enemy, attacks, transformations, 0.25)
 	_process_action(state.enemy, state.player, action, 0.25)
 
 func _process_action(actor: FighterStats, target: FighterStats, action_id: StringName, action_infusion: float) -> bool:

@@ -1,8 +1,9 @@
 class_name EnemyAI
 extends RefCounted
 
-func _can_use_attack(enemy: FighterStats, attack: AttackDef) -> bool:
-	if enemy.stamina < attack.stamina_cost or enemy.drawn_ki < attack.ki_cost:
+func _can_use_attack(enemy: FighterStats, attack: AttackDef, infusion_ratio: float) -> bool:
+	var infusion_cost := int(round(enemy.max_drawn_ki * infusion_ratio * attack.infusion_cap))
+	if enemy.stamina < attack.stamina_cost or enemy.drawn_ki < (attack.ki_cost + infusion_cost):
 		return false
 	if attack.required_transformation_id == &"":
 		return true
@@ -26,7 +27,7 @@ func _can_transform(enemy: FighterStats, transformations: Dictionary) -> bool:
 			return true
 	return false
 
-func choose_action(enemy: FighterStats, attacks: Dictionary, transformations: Dictionary) -> StringName:
+func choose_action(enemy: FighterStats, attacks: Dictionary, transformations: Dictionary, infusion_ratio: float = 0.0) -> StringName:
 	var low_ki := enemy.drawn_ki < 30
 	var low_stamina := enemy.stamina < 25
 
@@ -40,19 +41,19 @@ func choose_action(enemy: FighterStats, attacks: Dictionary, transformations: Di
 		return &"kaioken"
 
 	var roll := randf()
-	if roll < 0.35 and _has_attack(enemy, &"strike", attacks) and _can_use_attack(enemy, attacks[&"strike"]):
+	if roll < 0.35 and _has_attack(enemy, &"strike", attacks) and _can_use_attack(enemy, attacks[&"strike"], infusion_ratio):
 		return &"strike"
-	if roll < 0.72 and _has_attack(enemy, &"ki_blast", attacks) and _can_use_attack(enemy, attacks[&"ki_blast"]):
+	if roll < 0.72 and _has_attack(enemy, &"ki_blast", attacks) and _can_use_attack(enemy, attacks[&"ki_blast"], infusion_ratio):
 		return &"ki_blast"
-	if _has_attack(enemy, &"double_sunday", attacks) and _can_use_attack(enemy, attacks[&"double_sunday"]):
+	if _has_attack(enemy, &"double_sunday", attacks) and _can_use_attack(enemy, attacks[&"double_sunday"], infusion_ratio):
 		return &"double_sunday"
-	if _has_attack(enemy, &"ki_volley", attacks) and _can_use_attack(enemy, attacks[&"ki_volley"]):
+	if _has_attack(enemy, &"ki_volley", attacks) and _can_use_attack(enemy, attacks[&"ki_volley"], infusion_ratio):
 		return &"ki_volley"
-	if _has_attack(enemy, &"ki_barrage", attacks) and _can_use_attack(enemy, attacks[&"ki_barrage"]):
+	if _has_attack(enemy, &"ki_barrage", attacks) and _can_use_attack(enemy, attacks[&"ki_barrage"], infusion_ratio):
 		return &"ki_barrage"
-	if _has_attack(enemy, &"strike", attacks) and _can_use_attack(enemy, attacks[&"strike"]):
+	if _has_attack(enemy, &"strike", attacks) and _can_use_attack(enemy, attacks[&"strike"], infusion_ratio):
 		return &"strike"
-	if _has_attack(enemy, &"ki_blast", attacks) and _can_use_attack(enemy, attacks[&"ki_blast"]):
+	if _has_attack(enemy, &"ki_blast", attacks) and _can_use_attack(enemy, attacks[&"ki_blast"], infusion_ratio):
 		return &"ki_blast"
 	if enemy.stored_ki > 0 and enemy.drawn_ki < enemy.max_drawn_ki and enemy.has_utility_skill(&"power_up"):
 		return &"power_up"
