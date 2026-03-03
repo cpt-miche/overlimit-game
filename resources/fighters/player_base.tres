@@ -16,7 +16,6 @@ drawn_ki = 24
 physical_strength = 56
 ki_strength = 50
 speed = 46
-control = 42
 attack_skill_ids = PackedStringArray("strike", "ki_blast", "ki_volley", "ki_barrage")
 utility_skill_ids = PackedStringArray("power_up", "guard", "transform_form", "kaioken")
 transformation_skill_ids = PackedStringArray("ss1", "kaioken")

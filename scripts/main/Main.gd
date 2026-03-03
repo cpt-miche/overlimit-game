@@ -52,7 +52,6 @@ func _refresh_stat_screen() -> void:
 			"Physical Strength: %d" % battle_controller.player_base.physical_strength,
 			"Ki Strength: %d" % battle_controller.player_base.ki_strength,
 			"Speed: %d" % battle_controller.player_base.speed,
-			"Control: %d" % battle_controller.player_base.control,
 		])
 	stat_label.text = "[b]Stat Screen[/b]\n" + "\n".join(lines)
 

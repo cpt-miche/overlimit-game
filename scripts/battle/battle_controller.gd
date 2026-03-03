@@ -207,9 +207,9 @@ func _apply_kaioken_upkeep(fighter: FighterStats) -> void:
 	var kaioken := _get_kaioken_transformation(fighter)
 	if kaioken == null:
 		return
-	var hp_upkeep := kaioken.get_upkeep_amount(fighter.max_hp, kaioken.hp_upkeep_pct, fighter.form_mastery_level)
-	var stamina_upkeep := kaioken.get_upkeep_amount(fighter.max_stamina, kaioken.stamina_upkeep_pct, fighter.form_mastery_level)
-	var drawn_ki_upkeep := kaioken.get_upkeep_amount(fighter.max_drawn_ki, kaioken.drawn_ki_upkeep_pct, fighter.form_mastery_level)
+	var hp_upkeep := int(round(float(fighter.max_hp) * kaioken.hp_upkeep_pct))
+	var stamina_upkeep := int(round(float(fighter.max_stamina) * kaioken.stamina_upkeep_pct))
+	var drawn_ki_upkeep := int(round(float(fighter.max_drawn_ki) * kaioken.drawn_ki_upkeep_pct))
 	fighter.hp -= hp_upkeep
 	fighter.stamina -= stamina_upkeep
 	fighter.drawn_ki -= drawn_ki_upkeep
@@ -360,7 +360,6 @@ func _fighter_stat_lines(f: FighterStats) -> PackedStringArray:
 		"Physical Strength: %d" % f.physical_strength,
 		"Ki Strength: %d" % f.ki_strength,
 		"Speed: %d" % f.speed,
-		"Control: %d" % f.control,
 		"Escalation: %d" % int(f.escalation),
 		"Form Level: %d" % f.form_level,
 		"Active Form Transform: %s" % String(f.active_form_transformation_id),

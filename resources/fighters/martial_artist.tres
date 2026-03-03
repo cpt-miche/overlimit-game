@@ -16,7 +16,6 @@ drawn_ki = 0
 physical_strength = 20
 ki_strength = 0
 speed = 20
-control = 0
 attack_skill_ids = PackedStringArray("strike")
 utility_skill_ids = PackedStringArray("guard")
 transformation_skill_ids = PackedStringArray()

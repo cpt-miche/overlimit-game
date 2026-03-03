@@ -29,7 +29,6 @@ const enemyRoster = [
     physical: 38,
     ki: 0,
     speed: 34,
-    control: 0,
     canUseKi: false,
     canKaioken: false,
     strengthLabel: 'Very Weak'
@@ -48,7 +47,6 @@ const enemyRoster = [
     physical: 48,
     ki: 36,
     speed: 39,
-    control: 28,
     canUseKi: true,
     canKaioken: false,
     strengthLabel: 'Weak'
@@ -67,7 +65,6 @@ const enemyRoster = [
     physical: 52,
     ki: 48,
     speed: 40,
-    control: 36,
     canUseKi: true,
     canKaioken: false,
     strengthLabel: 'Medium'
@@ -86,7 +83,6 @@ const enemyRoster = [
     physical: 86,
     ki: 94,
     speed: 76,
-    control: 70,
     canUseKi: true,
     canKaioken: false,
     strengthLabel: 'Very Strong'
@@ -126,7 +122,6 @@ function makeFighter(name, isPlayer = false) {
     physical: 56,
     ki: 50,
     speed: 46,
-    control: 42,
     escalation: 0,
     guard: false,
     kaioken: false,
@@ -176,7 +171,7 @@ function endBattle(win) {
   mode = 'explore';
   controls.classList.add('hidden');
   battleStatus.textContent = win
-    ? 'Victory! You learned Ki Control +1. Walk around to challenge again.'
+    ? 'Victory! You grew stronger. Walk around to challenge again.'
     : 'Defeat! Recover and challenge again.';
 }
 
@@ -269,8 +264,7 @@ function applyAttack(attacker, defender, cfg) {
 function applyRoundDrain(fighter) {
   if (!fighter.kaioken) return;
   const hpUpkeep = Math.round(fighter.maxHp * 0.01);
-  const masteryFactor = Math.max(0, 1 - fighter.control * 0.002);
-  const staminaUpkeep = Math.round(fighter.maxStamina * 0.06 * masteryFactor);
+  const staminaUpkeep = Math.round(fighter.maxStamina * 0.06);
   fighter.hp -= hpUpkeep;
   fighter.stamina -= staminaUpkeep;
   addLog(`${fighter.name}'s Kaioken upkeep: -${hpUpkeep} HP, -${staminaUpkeep} stamina.`);

@@ -18,7 +18,6 @@ extends Resource
 @export var physical_strength: int = 56
 @export var ki_strength: int = 50
 @export var speed: int = 46
-@export var control: int = 42
 
 @export var attack_skill_ids: PackedStringArray = PackedStringArray([&"strike", &"ki_blast", &"ki_volley", &"ki_barrage"])
 @export var utility_skill_ids: PackedStringArray = PackedStringArray([&"power_up", &"guard", &"transform_form", &"kaioken"])
@@ -53,7 +52,6 @@ func duplicate_runtime() -> FighterStats:
 	copy.physical_strength = physical_strength
 	copy.ki_strength = ki_strength
 	copy.speed = speed
-	copy.control = control
 	copy.attack_skill_ids = attack_skill_ids.duplicate()
 	copy.utility_skill_ids = utility_skill_ids.duplicate()
 	copy.transformation_skill_ids = transformation_skill_ids.duplicate()
