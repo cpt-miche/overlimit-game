@@ -38,6 +38,11 @@ position = Vector2(700, 300)
 enemy_id = &"frieza_force"
 display_name = "Frieza Force"
 
+[node name="FriezaNPC" parent="Enemies" instance=ExtResource("3")]
+position = Vector2(760, 210)
+enemy_id = &"frieza"
+display_name = "Frieza"
+
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(640, 360)
 enabled = true

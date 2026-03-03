@@ -13,6 +13,7 @@ var enemy_map := {
 	&"saibaman": preload("res://resources/fighters/saibaman.tres"),
 	&"raditz_scout": preload("res://resources/fighters/raditz_scout.tres"),
 	&"frieza_force": preload("res://resources/fighters/frieza_force.tres"),
+	&"frieza": preload("res://resources/fighters/frieza.tres"),
 }
 
 var active_enemy_id: StringName = &""

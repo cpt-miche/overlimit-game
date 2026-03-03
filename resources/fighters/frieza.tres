@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="FighterStats" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/fighter_stats.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+fighter_name = "Frieza"
+max_hp = 3000
+hp = 3000
+max_stamina = 500
+stamina = 500
+max_stored_ki = 1220
+stored_ki = 1220
+max_drawn_ki = 405
+drawn_ki = 40
+physical_strength = 1800
+ki_strength = 150
+speed = 90
