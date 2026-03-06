@@ -17,5 +17,5 @@ physical_strength = 20
 ki_strength = 0
 speed = 20
 attack_skill_ids = PackedStringArray("strike")
-utility_skill_ids = PackedStringArray("guard")
+utility_skill_ids = PackedStringArray()
 transformation_skill_ids = PackedStringArray()

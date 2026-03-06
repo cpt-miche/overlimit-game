@@ -77,10 +77,6 @@ text = "Barrage"
 layout_mode = 2
 text = "Power Up"
 
-[node name="guard" type="Button" parent="Margin/VBox/Actions"]
-layout_mode = 2
-text = "Guard"
-
 [node name="transform_form" type="Button" parent="Margin/VBox/Actions"]
 layout_mode = 2
 text = "Transform Up"

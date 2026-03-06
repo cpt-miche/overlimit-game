@@ -64,7 +64,6 @@ func _on_action_pressed(action_id: StringName) -> void:
 	if not action_consumed:
 		_refresh_view()
 		return
-	state.player.guarding = false
 	if _check_end():
 		return
 
@@ -77,7 +76,6 @@ func _match_player_action(action_id: StringName) -> bool:
 	return _process_action(state.player, state.enemy, action_id, infusion_ratio)
 
 func _resolve_enemy_turn() -> void:
-	state.enemy.guarding = false
 	var action := enemy_ai.choose_action(state.enemy, attacks, transformations, 0.25)
 	_process_action(state.enemy, state.player, action, 0.25)
 
@@ -85,14 +83,6 @@ func _process_action(actor: FighterStats, target: FighterStats, action_id: Strin
 	match action_id:
 		&"power_up":
 			_power_up(actor)
-			return true
-		&"guard":
-			if not actor.has_utility_skill(&"guard"):
-				_log("%s cannot guard." % actor.fighter_name)
-				return true
-			actor.guarding = true
-			actor.stamina += 8
-			_log("%s guards and steadies stance." % actor.fighter_name)
 			return true
 		&"kaioken":
 			return _toggle_kaioken(actor)
