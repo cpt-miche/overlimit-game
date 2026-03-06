@@ -87,6 +87,92 @@ select {
 
 .hidden { display: none; }
 
+.escape-menu {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 18, 0.72);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  z-index: 20;
+}
+
+.escape-menu__panel {
+  width: min(760px, 96vw);
+  min-height: 420px;
+  background: #161d35;
+  border: 1px solid #3850a0;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.escape-menu__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.escape-menu__tabs {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.escape-tab.is-active {
+  background: #4167ff;
+  border-color: #7da0ff;
+}
+
+.escape-menu__content {
+  margin-top: 1rem;
+  padding: 0.9rem;
+  border: 1px solid #2c3f7d;
+  border-radius: 8px;
+  background: #0f1630;
+}
+
+.equipment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+
+.equipment-slot,
+.skill-list li,
+.talent-list li {
+  background: #161f40;
+  border: 1px solid #2f478f;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.equipment-slot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-transform: capitalize;
+}
+
+.skill-list,
+.talent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.skill-item__meta {
+  display: block;
+  font-size: 0.85rem;
+  color: #bdd3ff;
+  margin-top: 0.2rem;
+}
+
 .log-wrap {
   margin-top: 0.75rem;
   background: #101730;
