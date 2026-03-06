@@ -5,6 +5,11 @@ const battleStatus = document.getElementById('battleStatus');
 const statsGrid = document.getElementById('statsGrid');
 const controls = document.getElementById('controls');
 const actionsEl = document.getElementById('actions');
+const abilitySelect = document.getElementById('abilitySelect');
+const abilityUse = document.getElementById('abilityUse');
+const ultimateSelect = document.getElementById('ultimateSelect');
+const ultimateUse = document.getElementById('ultimateUse');
+const endTurnButton = document.getElementById('endTurn');
 const combatLog = document.getElementById('combatLog');
 const kiInfusion = document.getElementById('kiInfusion');
 const kiInfusionLabel = document.getElementById('kiInfusionLabel');
@@ -101,13 +106,15 @@ const enemyWorlds = enemyRoster.map((enemy, index) => ({
   h: 64
 }));
 
-const actions = [
-  { key: 'strike', label: 'Physical Strike' },
-  { key: 'kiBlast', label: 'Ki Blast' },
-  { key: 'volley', label: 'Ki Blast Volley' },
-  { key: 'barrage', label: 'Ki Blast Barrage' },
-  { key: 'powerUp', label: 'Power Up (+Drawn Ki)' },
-  { key: 'guard', label: 'Guard' },
+const baseActions = [
+  { key: 'strike', label: 'Physical Strike', type: 'primary' },
+  { key: 'kiBlast', label: 'Ki Blast', type: 'primary' },
+  { key: 'powerUp', label: 'Power Up (+Drawn Ki)', type: 'secondary' },
+  { key: 'guard', label: 'Guard', type: 'secondary' }
+];
+
+const abilityActions = [
+  { key: 'volley', label: 'Ki Volley' },
   { key: 'transform', label: 'Transform (SS1)' }
 ];
 
@@ -165,6 +172,10 @@ function handleEscapeTabArrows(event) {
   }
 }
 
+const ultimateActions = [
+  { key: 'barrage', label: 'Ki Barrage' }
+];
+
 function makeFighter(name, isPlayer = false) {
   return {
     name,
@@ -202,12 +213,32 @@ function addLog(text) {
 
 function setupActionButtons() {
   actionsEl.innerHTML = '';
-  actions.forEach((action) => {
+  baseActions.forEach((action) => {
     const button = document.createElement('button');
     button.textContent = action.label;
     button.addEventListener('click', () => playerAction(action.key));
     actionsEl.appendChild(button);
   });
+
+  abilitySelect.innerHTML = '';
+  abilityActions.forEach((action) => {
+    const option = document.createElement('option');
+    option.value = action.key;
+    option.textContent = action.label;
+    abilitySelect.appendChild(option);
+  });
+
+  ultimateSelect.innerHTML = '';
+  ultimateActions.forEach((action) => {
+    const option = document.createElement('option');
+    option.value = action.key;
+    option.textContent = action.label;
+    ultimateSelect.appendChild(option);
+  });
+
+  abilityUse.addEventListener('click', () => playerAction(abilitySelect.value));
+  ultimateUse.addEventListener('click', () => playerAction(ultimateSelect.value));
+  endTurnButton.addEventListener('click', endPlayerTurn);
 }
 
 function startBattle(enemyProfile) {
@@ -217,7 +248,8 @@ function startBattle(enemyProfile) {
     enemy: { ...makeFighter(enemyProfile.name), ...enemyProfile },
     turn: 1,
     suppressionBase: 35,
-    winner: null
+    winner: null,
+    playerTurnState: { usedPrimary: false, usedSecondary: false }
   };
   controls.classList.remove('hidden');
   kiInfusion.value = '0';
@@ -283,10 +315,10 @@ function applyAttack(attacker, defender, cfg) {
         if (pctCost <= availableInfusionKi) maxInfusionPct = pct;
       }
       addLog(`Not enough ki to attack with ${cfg.label} with ${requestedInfusionPct}% of ki infusion. (Max ${maxInfusionPct}%).`);
-      return;
+      return false;
     }
     addLog(`${attacker.name} tried ${cfg.label}, but lacked resources.`);
-    return;
+    return false;
   }
 
   attacker.stamina -= staminaCost;
@@ -302,10 +334,10 @@ function applyAttack(attacker, defender, cfg) {
 
   if (Math.random() > hitChance) {
     addLog(`${attacker.name}'s ${cfg.label} missed.`);
-    return;
+    return true;
   }
 
-  if (cfg.canVanish && tryVanish(attacker, defender, cfg.tier)) return;
+  if (cfg.canVanish && tryVanish(attacker, defender, cfg.tier)) return true;
 
   const suppression = 1 - getSuppression(attacker);
   const transBoost = attacker.kaioken ? 2 : 1;
@@ -317,6 +349,7 @@ function applyAttack(attacker, defender, cfg) {
   attacker.escalation += cfg.escalationGain;
   defender.escalation += 2;
   addLog(`${attacker.name} used ${cfg.label} for ${finalDmg} damage.`);
+  return true;
 }
 
 function applyRoundDrain(fighter) {
@@ -328,37 +361,112 @@ function applyRoundDrain(fighter) {
   addLog(`${fighter.name}'s Kaioken upkeep: -${hpUpkeep} HP, -${staminaUpkeep} stamina.`);
 }
 
+function consumeAction(type) {
+  const turnState = battle.playerTurnState;
+  if (type === 'ultimate') {
+    if (turnState.usedPrimary || turnState.usedSecondary) {
+      addLog('Ultimate attacks require both a fresh primary and secondary action.');
+      return false;
+    }
+    turnState.usedPrimary = true;
+    turnState.usedSecondary = true;
+    return true;
+  }
+
+  if (type === 'primary') {
+    if (turnState.usedPrimary) {
+      addLog('Primary action already used this turn.');
+      return false;
+    }
+    turnState.usedPrimary = true;
+    return true;
+  }
+
+  if (turnState.usedSecondary) {
+    addLog('Secondary action already used this turn.');
+    return false;
+  }
+  turnState.usedSecondary = true;
+  return true;
+}
+
+function maybeAutoEndTurn() {
+  const turnState = battle.playerTurnState;
+  if (turnState.usedPrimary && turnState.usedSecondary && !battle.winner) {
+    endPlayerTurn();
+  } else {
+    renderBattle();
+  }
+}
+
+function endPlayerTurn() {
+  if (mode !== 'battle' || battle.winner) return;
+  const turnState = battle.playerTurnState;
+  if (!turnState.usedPrimary && !turnState.usedSecondary) {
+    addLog('Use at least one action before ending the turn.');
+    renderBattle();
+    return;
+  }
+
+  if (checkWinner()) return;
+  enemyTurn();
+  if (checkWinner()) return;
+
+  battle.player.guard = false;
+  battle.turn += 1;
+  battle.player.escalation += 3;
+  battle.enemy.escalation += 3;
+  applyRoundDrain(battle.player);
+  applyRoundDrain(battle.enemy);
+  battle.player.stamina = clamp(battle.player.stamina + 10, 0, battle.player.maxStamina);
+  battle.enemy.stamina = clamp(battle.enemy.stamina + 10, 0, battle.enemy.maxStamina);
+  battle.playerTurnState.usedPrimary = false;
+  battle.playerTurnState.usedSecondary = false;
+  renderBattle();
+}
+
 function playerAction(actionKey) {
   if (mode !== 'battle' || battle.winner) return;
   const p = battle.player;
   const e = battle.enemy;
-  p.guard = false;
+  let executed = false;
+  let actionType = 'primary';
+
+  if (actionKey === 'powerUp' || actionKey === 'guard') actionType = 'secondary';
+  if (actionKey === 'barrage') actionType = 'ultimate';
+
+  if (!consumeAction(actionType)) {
+    renderBattle();
+    return;
+  }
+
+  if (actionType === 'secondary') p.guard = false;
 
   switch (actionKey) {
     case 'strike':
-      applyAttack(p, e, {
+      executed = applyAttack(p, e, {
         label: 'Physical Strike', type: 'physical', base: 28, scaling: 1.15,
         baseHit: 0.78, staminaCost: 18, kiCost: 0, infusionCap: 0.2,
         canVanish: true, tier: 1, escalationGain: 7
       });
       break;
     case 'kiBlast':
-      applyAttack(p, e, {
+      executed = applyAttack(p, e, {
         label: 'Ki Blast', type: 'ki', base: 24, scaling: 1.05,
         baseHit: 0.75, staminaCost: 4, kiCost: 22, infusionCap: 0.32,
         canVanish: true, tier: 1, escalationGain: 8
       });
       break;
     case 'volley':
-      applyAttack(p, e, {
-        label: 'Ki Blast Volley', type: 'ki', base: 34, scaling: 1.08,
+      executed = applyAttack(p, e, {
+        label: 'Ki Volley', type: 'ki', base: 34, scaling: 1.08,
         baseHit: 0.85, staminaCost: 8, kiCost: 44, infusionCap: 0.4,
         canVanish: true, tier: 2, escalationGain: 10
       });
       break;
     case 'barrage':
-      applyAttack(p, e, {
-        label: 'Ki Blast Barrage', type: 'ki', base: 50, scaling: 0.95,
+      executed = applyAttack(p, e, {
+        label: 'Ki Barrage', type: 'ki', base: 50, scaling: 0.95,
         baseHit: 0.92, staminaCost: 12, kiCost: 70, infusionCap: 0.55,
         canVanish: true, tier: 3, escalationGain: 13
       });
@@ -372,6 +480,7 @@ function playerAction(actionKey) {
         p.drawnKi += amount;
         p.escalation += 5;
         addLog(`Power up: converted ${amount} stored ki into drawn ki.`);
+        executed = true;
       }
       break;
     }
@@ -379,6 +488,7 @@ function playerAction(actionKey) {
       p.guard = true;
       p.stamina = clamp(p.stamina + 8, 0, p.maxStamina);
       addLog('Player braces and guards.');
+      executed = true;
       break;
     case 'transform':
       if (p.formLevel >= 1) {
@@ -400,21 +510,24 @@ function playerAction(actionKey) {
         const staminaMult = p.maxStamina / Math.max(1, prevMaxStamina);
         p.stamina = clamp(Math.round(prevStamina * staminaMult), 0, p.maxStamina);
         addLog(`${p.name} transforms to SS1! Stamina ${prevStamina}/${prevMaxStamina} -> ${p.stamina}/${p.maxStamina}.`);
+        executed = true;
       }
       break;
   }
 
+  if (!executed) {
+    if (actionType === 'ultimate') {
+      battle.playerTurnState.usedPrimary = false;
+      battle.playerTurnState.usedSecondary = false;
+    } else if (actionType === 'primary') {
+      battle.playerTurnState.usedPrimary = false;
+    } else {
+      battle.playerTurnState.usedSecondary = false;
+    }
+  }
+
   if (checkWinner()) return;
-  enemyTurn();
-  checkWinner();
-  battle.turn += 1;
-  battle.player.escalation += 3;
-  battle.enemy.escalation += 3;
-  applyRoundDrain(battle.player);
-  applyRoundDrain(battle.enemy);
-  battle.player.stamina = clamp(battle.player.stamina + 10, 0, battle.player.maxStamina);
-  battle.enemy.stamina = clamp(battle.enemy.stamina + 10, 0, battle.enemy.maxStamina);
-  renderBattle();
+  maybeAutoEndTurn();
 }
 
 function enemyTurn() {
@@ -536,7 +649,10 @@ function renderBar(label, value, max) {
 function renderBattle() {
   if (!battle) return;
   statsGrid.innerHTML = `${renderFighter(battle.player)}${renderFighter(battle.enemy)}`;
-  battleStatus.textContent = `Turn ${battle.turn}. Escalation rises each round and when big actions happen.`;
+  const turnState = battle.playerTurnState;
+  const primaryLeft = turnState.usedPrimary ? 'used' : 'ready';
+  const secondaryLeft = turnState.usedSecondary ? 'used' : 'ready';
+  battleStatus.textContent = `Turn ${battle.turn}. Primary: ${primaryLeft}. Secondary: ${secondaryLeft}. End turn after acting.`;
 }
 
 function drawWorld() {

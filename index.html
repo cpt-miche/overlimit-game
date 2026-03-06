@@ -23,6 +23,17 @@
         <label for="kiInfusion">Drawn Ki Infusion for next action: <span id="kiInfusionLabel">0%</span></label>
         <input id="kiInfusion" type="range" min="0" max="60" value="0" />
         <div class="button-row" id="actions"></div>
+        <div class="button-row action-groups">
+          <label for="abilitySelect">Abilities</label>
+          <select id="abilitySelect"></select>
+          <button id="abilityUse" type="button">Use Ability</button>
+
+          <label for="ultimateSelect">Ultimates</label>
+          <select id="ultimateSelect"></select>
+          <button id="ultimateUse" type="button">Use Ultimate</button>
+
+          <button id="endTurn" type="button">End Turn</button>
+        </div>
       </div>
 
       <div class="log-wrap">
