@@ -585,7 +585,6 @@ function tick() {
 
 escapeTabs.forEach((tab) => {
   tab.addEventListener('click', () => setEscapeTab(tab.dataset.tab));
-  tab.addEventListener('keydown', handleEscapeTabArrows);
 });
 
 window.addEventListener('keydown', (event) => {
