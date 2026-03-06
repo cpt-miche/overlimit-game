@@ -10,7 +10,7 @@ This repository now includes a Godot 4.x vertical-slice foundation for a top-dow
   - world-to-battle transition signal flow.
 - Battle scene scaffold with:
   - battle controller,
-  - action buttons (`strike`, `ki_blast`, `ki_volley`, `ki_barrage`, `power_up`, `transform`),
+  - action buttons (`strike`, `ki_blast`, `ki_volley`, `ki_barrage`, `power_up`) plus a `transform` dropdown (`Super Saiyan`, `Kaioken`),
   - ki infusion slider,
   - log/status labels.
 - Data-driven combat definitions via `Resource` files:

@@ -177,7 +177,7 @@ func _toggle_kaioken(fighter: FighterStats) -> bool:
 		return true
 	if fighter.form_level > 0:
 		_log("%s can only use Kaioken in base form." % fighter.fighter_name)
-		return false
+		return true
 	var kaioken: TransformationDef = transformations.get(&"kaioken", null)
 	if kaioken == null:
 		_log("Kaioken transformation is not configured.")

@@ -10,6 +10,7 @@ signal exit_requested
 @onready var infusion_label: Label = $Margin/VBox/InfusionRow/InfusionValue
 @onready var debug_panel: PanelContainer = $DebugPanel
 @onready var debug_label: RichTextLabel = $DebugPanel/Margin/Stats
+@onready var transform_menu: MenuButton = $Margin/VBox/Actions/TransformMenu
 @onready var exit_box: PanelContainer = $Margin/VBox/ExitBox
 @onready var exit_button: Button = get_node_or_null("Margin/VBox/ExitBox/Margin/ExitBattleButton")
 
@@ -17,8 +18,11 @@ var debug_mode_enabled := false
 
 func _ready() -> void:
 	infusion_slider.value_changed.connect(_on_infusion_changed)
-	for button: Button in $Margin/VBox/Actions.get_children():
-		button.pressed.connect(func() -> void: action_pressed.emit(StringName(button.name)))
+	for child: Node in $Margin/VBox/Actions.get_children():
+		if child is Button and not (child is MenuButton):
+			var button := child as Button
+			button.pressed.connect(func() -> void: action_pressed.emit(StringName(button.name)))
+	_setup_transform_menu()
 	if exit_button != null:
 		exit_button.pressed.connect(func() -> void: exit_requested.emit())
 	else:
@@ -46,6 +50,20 @@ func append_log(line: String) -> void:
 func clear_log() -> void:
 	combat_log.text = ""
 
+func _setup_transform_menu() -> void:
+	var popup := transform_menu.get_popup()
+	popup.clear()
+	popup.add_item("Super Saiyan", 0)
+	popup.add_item("Kaioken", 1)
+	popup.id_pressed.connect(_on_transform_option_selected)
+
+func _on_transform_option_selected(id: int) -> void:
+	match id:
+		0:
+			action_pressed.emit(&"transform_form")
+		1:
+			action_pressed.emit(&"kaioken")
+
 func _on_infusion_changed(value: float) -> void:
 	infusion_label.text = "%d%%" % int(value)
 	infusion_changed.emit(value / 100.0)
@@ -54,8 +72,9 @@ func set_debug_stats(lines: PackedStringArray) -> void:
 	debug_label.text = "\n".join(lines)
 
 func set_battle_active(is_active: bool) -> void:
-	for button: Button in $Margin/VBox/Actions.get_children():
-		button.disabled = not is_active
+	for child: Node in $Margin/VBox/Actions.get_children():
+		if child is BaseButton:
+			(child as BaseButton).disabled = not is_active
 	infusion_slider.editable = is_active
 	exit_box.visible = not is_active
 

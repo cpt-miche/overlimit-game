@@ -77,13 +77,9 @@ text = "Barrage"
 layout_mode = 2
 text = "Power Up"
 
-[node name="transform_form" type="Button" parent="Margin/VBox/Actions"]
+[node name="TransformMenu" type="MenuButton" parent="Margin/VBox/Actions"]
 layout_mode = 2
-text = "Transform Up"
-
-[node name="kaioken" type="Button" parent="Margin/VBox/Actions"]
-layout_mode = 2
-text = "Kaioken"
+text = "Transform"
 
 [node name="ExitBox" type="PanelContainer" parent="Margin/VBox"]
 visible = false
