@@ -67,6 +67,24 @@ button {
 }
 button:hover { filter: brightness(1.15); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.action-groups {
+  align-items: center;
+}
+
+.action-groups label {
+  font-size: 0.9rem;
+  color: #b8c9ff;
+}
+
+select {
+  background: #101730;
+  border: 1px solid #4366ef;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.35rem 0.45rem;
+}
+
 .hidden { display: none; }
 
 .log-wrap {
