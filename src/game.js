@@ -8,6 +8,10 @@ const actionsEl = document.getElementById('actions');
 const combatLog = document.getElementById('combatLog');
 const kiInfusion = document.getElementById('kiInfusion');
 const kiInfusionLabel = document.getElementById('kiInfusionLabel');
+const escapeMenu = document.getElementById('escapeMenu');
+const escapeTabs = Array.from(document.querySelectorAll('.escape-tab'));
+const escapePanels = Array.from(document.querySelectorAll('.escape-panel'));
+const skillList = document.getElementById('skillList');
 
 const keys = new Set();
 let mode = 'explore';
@@ -106,6 +110,60 @@ const actions = [
   { key: 'guard', label: 'Guard' },
   { key: 'transform', label: 'Transform (SS1)' }
 ];
+
+const protagonistSkills = [
+  { name: 'Physical Strike', attack: 28, staminaCost: 18, kiCost: 0 },
+  { name: 'Ki Blast', attack: 24, staminaCost: 4, kiCost: 22 },
+  { name: 'Ki Blast Volley', attack: 34, staminaCost: 8, kiCost: 44 },
+  { name: 'Ki Blast Barrage', attack: 50, staminaCost: 12, kiCost: 70 },
+  { name: 'Transform (SS1)', attack: 'Form Buff', staminaCost: '5% max', kiCost: '2% stored' }
+];
+
+let activeEscapeTab = 'inventory';
+
+function renderSkillList() {
+  skillList.innerHTML = '';
+  protagonistSkills.forEach((skill) => {
+    const item = document.createElement('li');
+    item.innerHTML = `<strong>${skill.name}</strong><span class="skill-item__meta">Attack: ${skill.attack} | Stamina Cost: ${skill.staminaCost} | Ki Cost: ${skill.kiCost}</span>`;
+    skillList.appendChild(item);
+  });
+}
+
+function setEscapeTab(tabName, shouldFocus = false) {
+  activeEscapeTab = tabName;
+  escapeTabs.forEach((tab) => {
+    const isActive = tab.dataset.tab === tabName;
+    tab.classList.toggle('is-active', isActive);
+    tab.setAttribute('aria-selected', String(isActive));
+    tab.setAttribute('tabindex', isActive ? '0' : '-1');
+    if (isActive && shouldFocus) tab.focus();
+  });
+
+  escapePanels.forEach((panel) => {
+    panel.classList.toggle('hidden', panel.id !== `panel${tabName[0].toUpperCase()}${tabName.slice(1)}`);
+  });
+}
+
+function setEscapeMenuOpen(open) {
+  escapeMenu.classList.toggle('hidden', !open);
+  escapeMenu.setAttribute('aria-hidden', String(!open));
+  if (open) {
+    setEscapeTab(activeEscapeTab, true);
+  }
+}
+
+function handleEscapeTabArrows(event) {
+  const index = escapeTabs.findIndex((tab) => tab.dataset.tab === activeEscapeTab);
+  if (index < 0) return;
+  let nextIndex = index;
+  if (event.key === 'ArrowRight') nextIndex = (index + 1) % escapeTabs.length;
+  if (event.key === 'ArrowLeft') nextIndex = (index - 1 + escapeTabs.length) % escapeTabs.length;
+  if (nextIndex !== index) {
+    event.preventDefault();
+    setEscapeTab(escapeTabs[nextIndex].dataset.tab, true);
+  }
+}
 
 function makeFighter(name, isPlayer = false) {
   return {
@@ -525,11 +583,29 @@ function tick() {
   requestAnimationFrame(tick);
 }
 
-window.addEventListener('keydown', (event) => keys.add(event.key.toLowerCase()));
+escapeTabs.forEach((tab) => {
+  tab.addEventListener('click', () => setEscapeTab(tab.dataset.tab));
+  tab.addEventListener('keydown', handleEscapeTabArrows);
+});
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    setEscapeMenuOpen(escapeMenu.classList.contains('hidden'));
+    return;
+  }
+
+  if (!escapeMenu.classList.contains('hidden')) {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') handleEscapeTabArrows(event);
+    return;
+  }
+
+  keys.add(event.key.toLowerCase());
+});
 window.addEventListener('keyup', (event) => keys.delete(event.key.toLowerCase()));
 kiInfusion.addEventListener('input', () => {
   kiInfusionLabel.textContent = `${kiInfusion.value}%`;
 });
 
+renderSkillList();
 setupActionButtons();
 tick();

@@ -32,6 +32,55 @@
     </section>
   </main>
 
+  <section id="escapeMenu" class="escape-menu hidden" aria-hidden="true">
+    <div class="escape-menu__panel" role="dialog" aria-modal="true" aria-labelledby="escapeMenuTitle">
+      <div class="escape-menu__header">
+        <h2 id="escapeMenuTitle">Escape Menu</h2>
+        <p>Press <kbd>Esc</kbd> to close.</p>
+      </div>
+
+      <div class="escape-menu__tabs" id="escapeTabs" role="tablist" aria-label="Escape Menu Tabs">
+        <button class="escape-tab is-active" role="tab" data-tab="inventory" id="tabInventory" aria-controls="panelInventory" aria-selected="true">inventory</button>
+        <button class="escape-tab" role="tab" data-tab="equipment" id="tabEquipment" aria-controls="panelEquipment" aria-selected="false">equipment</button>
+        <button class="escape-tab" role="tab" data-tab="skills" id="tabSkills" aria-controls="panelSkills" aria-selected="false">skills</button>
+        <button class="escape-tab" role="tab" data-tab="talentTree" id="tabTalentTree" aria-controls="panelTalentTree" aria-selected="false">talent tree</button>
+      </div>
+
+      <div class="escape-menu__content">
+        <section class="escape-panel" id="panelInventory" role="tabpanel" aria-labelledby="tabInventory">
+          <h3>Inventory</h3>
+          <p>Placeholder inventory tab.</p>
+        </section>
+
+        <section class="escape-panel hidden" id="panelEquipment" role="tabpanel" aria-labelledby="tabEquipment">
+          <h3>Equipment</h3>
+          <div class="equipment-grid">
+            <div class="equipment-slot"><strong>head</strong><span>Empty</span></div>
+            <div class="equipment-slot"><strong>shirt</strong><span>Empty</span></div>
+            <div class="equipment-slot"><strong>pants</strong><span>Empty</span></div>
+            <div class="equipment-slot"><strong>hands</strong><span>Empty</span></div>
+            <div class="equipment-slot"><strong>feet</strong><span>Empty</span></div>
+            <div class="equipment-slot"><strong>earrings</strong><span>Empty</span></div>
+          </div>
+        </section>
+
+        <section class="escape-panel hidden" id="panelSkills" role="tabpanel" aria-labelledby="tabSkills">
+          <h3>Skills</h3>
+          <ul id="skillList" class="skill-list"></ul>
+        </section>
+
+        <section class="escape-panel hidden" id="panelTalentTree" role="tabpanel" aria-labelledby="tabTalentTree">
+          <h3>Talent Tree</h3>
+          <ul class="talent-list">
+            <li>speed up 5/10/15%</li>
+            <li>strength up 5/10/15%</li>
+            <li>health up 5/10/15%</li>
+          </ul>
+        </section>
+      </div>
+    </div>
+  </section>
+
   <script type="module" src="src/game.js"></script>
 </body>
 </html>
