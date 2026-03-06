@@ -29,12 +29,9 @@ func _can_transform(enemy: FighterStats, transformations: Dictionary) -> bool:
 
 func choose_action(enemy: FighterStats, attacks: Dictionary, transformations: Dictionary, infusion_ratio: float = 0.0) -> StringName:
 	var low_ki := enemy.drawn_ki < 30
-	var low_stamina := enemy.stamina < 25
 
 	if low_ki and enemy.stored_ki > 20 and enemy.has_utility_skill(&"power_up"):
 		return &"power_up"
-	if low_stamina and enemy.has_utility_skill(&"guard"):
-		return &"guard"
 	if _can_transform(enemy, transformations):
 		return &"transform_form"
 	if enemy.form_level == 0 and not enemy.kaioken_active and enemy.hp < 220 and enemy.stamina > 60 and enemy.has_utility_skill(&"kaioken") and enemy.has_transformation_skill(&"kaioken"):
@@ -57,6 +54,4 @@ func choose_action(enemy: FighterStats, attacks: Dictionary, transformations: Di
 		return &"ki_blast"
 	if enemy.stored_ki > 0 and enemy.drawn_ki < enemy.max_drawn_ki and enemy.has_utility_skill(&"power_up"):
 		return &"power_up"
-	if enemy.has_utility_skill(&"guard"):
-		return &"guard"
 	return &"power_up"
