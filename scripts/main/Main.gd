@@ -4,9 +4,10 @@ extends Node
 @onready var battle: Control = $Battle
 @onready var battle_controller: Node = $Battle/BattleController
 @onready var stat_screen: PanelContainer = $StatScreen
-@onready var stat_label: RichTextLabel = $StatScreen/Margin/VBox/Stats
-@onready var rest_button: Button = $StatScreen/Margin/VBox/Actions/Rest
-@onready var eat_button: Button = $StatScreen/Margin/VBox/Actions/Eat
+@onready var menu_tabs: TabContainer = $StatScreen/Margin/VBox/Tabs
+@onready var stat_label: RichTextLabel = $StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox/Stats
+@onready var rest_button: Button = $StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox/Actions/Rest
+@onready var eat_button: Button = $StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox/Actions/Eat
 
 var enemy_map := {
 	&"martial_artist": preload("res://resources/fighters/martial_artist.tres"),
@@ -34,6 +35,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _toggle_stat_screen() -> void:
 	stat_screen.visible = not stat_screen.visible
 	if stat_screen.visible:
+		menu_tabs.current_tab = 0
 		_refresh_stat_screen()
 
 func _refresh_stat_screen() -> void:
@@ -53,7 +55,7 @@ func _refresh_stat_screen() -> void:
 			"Ki Strength: %d" % battle_controller.player_base.ki_strength,
 			"Speed: %d" % battle_controller.player_base.speed,
 		])
-	stat_label.text = "[b]Stat Screen[/b]\n" + "\n".join(lines)
+	stat_label.text = "[b]Overview[/b]\n" + "\n".join(lines)
 
 func _rest_outside_battle() -> void:
 	if battle.visible:

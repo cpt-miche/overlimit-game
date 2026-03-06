@@ -35,20 +35,104 @@ layout_mode = 2
 layout_mode = 2
 text = "Press Esc to close"
 
-[node name="Actions" type="HBoxContainer" parent="StatScreen/Margin/VBox"]
+[node name="Tabs" type="TabContainer" parent="StatScreen/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Inventory" type="Control" parent="StatScreen/Margin/VBox/Tabs"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Margin" type="MarginContainer" parent="StatScreen/Margin/VBox/Tabs/Inventory"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="VBox" type="VBoxContainer" parent="StatScreen/Margin/VBox/Tabs/Inventory/Margin"]
 layout_mode = 2
 
-[node name="Rest" type="Button" parent="StatScreen/Margin/VBox/Actions"]
+[node name="Actions" type="HBoxContainer" parent="StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox"]
+layout_mode = 2
+
+[node name="Rest" type="Button" parent="StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox/Actions"]
 layout_mode = 2
 text = "Rest"
 
-[node name="Eat" type="Button" parent="StatScreen/Margin/VBox/Actions"]
+[node name="Eat" type="Button" parent="StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox/Actions"]
 layout_mode = 2
 text = "Eat"
 
-[node name="Stats" type="RichTextLabel" parent="StatScreen/Margin/VBox"]
+[node name="Stats" type="RichTextLabel" parent="StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 bbcode_enabled = true
 fit_content = false
 scroll_active = true
+
+[node name="Equipment" type="Control" parent="StatScreen/Margin/VBox/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="StatScreen/Margin/VBox/Tabs/Equipment"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Label" type="Label" parent="StatScreen/Margin/VBox/Tabs/Equipment/Margin"]
+layout_mode = 2
+text = "Equipment (placeholder)"
+
+[node name="Skills" type="Control" parent="StatScreen/Margin/VBox/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="StatScreen/Margin/VBox/Tabs/Skills"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Label" type="Label" parent="StatScreen/Margin/VBox/Tabs/Skills/Margin"]
+layout_mode = 2
+text = "Skills (placeholder)"
+
+[node name="TalentTree" type="Control" parent="StatScreen/Margin/VBox/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="StatScreen/Margin/VBox/Tabs/TalentTree"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Label" type="Label" parent="StatScreen/Margin/VBox/Tabs/TalentTree/Margin"]
+layout_mode = 2
+text = "Talent Tree (placeholder)"
