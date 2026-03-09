@@ -15,7 +15,13 @@
     </section>
 
     <section class="panel battle-panel">
-      <h2>Battle</h2>
+      <div class="battle-header">
+        <h2>Battle</h2>
+        <div class="action-indicators" aria-label="Turn action indicators">
+          <span id="primaryIndicator" class="action-indicator">Primary</span>
+          <span id="secondaryIndicator" class="action-indicator">Secondary</span>
+        </div>
+      </div>
       <div id="battleStatus" class="status">Approach Raditz and press <kbd>E</kbd> to start a fight.</div>
       <div class="stats-grid" id="statsGrid"></div>
 

@@ -37,6 +37,36 @@ canvas {
   background: #111;
 }
 
+
+.battle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.action-indicators {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.action-indicator {
+  padding: 0.22rem 0.55rem;
+  border: 1px solid #d9d2bc;
+  border-radius: 999px;
+  color: #2d3240;
+  background: #f2efe4;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.action-indicator.is-used {
+  color: #2b3040;
+  background: #d0d4de;
+  border-color: #bcc3d1;
+}
 .hint, .status { min-height: 1.5rem; color: #b8c9ff; }
 
 .stats-grid {
