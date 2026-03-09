@@ -16,3 +16,6 @@ drawn_ki = 40
 physical_strength = 400
 ki_strength = 100
 speed = 90
+attack_skill_ids = PackedStringArray("strike", "ki_blast", "ki_volley", "ki_barrage")
+utility_skill_ids = PackedStringArray("power_up", "transform_form")
+transformation_skill_ids = PackedStringArray("frieza_second_form")
