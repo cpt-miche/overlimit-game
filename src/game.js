@@ -2,6 +2,8 @@ const canvas = document.getElementById('world');
 const ctx = canvas.getContext('2d');
 const worldHint = document.getElementById('worldHint');
 const battleStatus = document.getElementById('battleStatus');
+const primaryIndicator = document.getElementById('primaryIndicator');
+const secondaryIndicator = document.getElementById('secondaryIndicator');
 const statsGrid = document.getElementById('statsGrid');
 const controls = document.getElementById('controls');
 const actionsEl = document.getElementById('actions');
@@ -110,7 +112,8 @@ const baseActions = [
   { key: 'strike', label: 'Physical Strike', type: 'primary' },
   { key: 'kiBlast', label: 'Ki Blast', type: 'primary' },
   { key: 'powerUp', label: 'Power Up (+Drawn Ki)', type: 'secondary' },
-  { key: 'guard', label: 'Guard', type: 'secondary' }
+  { key: 'guard', label: 'Guard', type: 'secondary' },
+  { key: 'skipSecondary', label: 'Skip Secondary Action', type: 'secondary' }
 ];
 
 const abilityActions = [
@@ -211,6 +214,18 @@ function addLog(text) {
   combatLog.prepend(li);
 }
 
+function updateActionIndicators() {
+  if (!battle) {
+    primaryIndicator.classList.remove('is-used');
+    secondaryIndicator.classList.remove('is-used');
+    return;
+  }
+
+  const turnState = battle.playerTurnState;
+  primaryIndicator.classList.toggle('is-used', turnState.usedPrimary);
+  secondaryIndicator.classList.toggle('is-used', turnState.usedSecondary);
+}
+
 function setupActionButtons() {
   actionsEl.innerHTML = '';
   baseActions.forEach((action) => {
@@ -260,6 +275,8 @@ function startBattle(enemyProfile) {
 function endBattle(win) {
   mode = 'explore';
   controls.classList.add('hidden');
+  battle = null;
+  updateActionIndicators();
   battleStatus.textContent = win
     ? 'Victory! You grew stronger. Walk around to challenge again.'
     : 'Defeat! Recover and challenge again.';
@@ -432,7 +449,7 @@ function playerAction(actionKey) {
   let executed = false;
   let actionType = 'primary';
 
-  if (actionKey === 'powerUp' || actionKey === 'guard') actionType = 'secondary';
+  if (actionKey === 'powerUp' || actionKey === 'guard' || actionKey === 'skipSecondary') actionType = 'secondary';
   if (actionKey === 'barrage') actionType = 'ultimate';
 
   if (!consumeAction(actionType)) {
@@ -488,6 +505,10 @@ function playerAction(actionKey) {
       p.guard = true;
       p.stamina = clamp(p.stamina + 8, 0, p.maxStamina);
       addLog('Player braces and guards.');
+      executed = true;
+      break;
+    case 'skipSecondary':
+      addLog('Player skips their secondary action.');
       executed = true;
       break;
     case 'transform':
@@ -653,6 +674,7 @@ function renderBattle() {
   const primaryLeft = turnState.usedPrimary ? 'used' : 'ready';
   const secondaryLeft = turnState.usedSecondary ? 'used' : 'ready';
   battleStatus.textContent = `Turn ${battle.turn}. Primary: ${primaryLeft}. Secondary: ${secondaryLeft}. End turn after acting.`;
+  updateActionIndicators();
 }
 
 function drawWorld() {
