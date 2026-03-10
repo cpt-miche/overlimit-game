@@ -32,6 +32,8 @@ display_name = "Saibaman"
 position = Vector2(540, 320)
 enemy_id = &"raditz_scout"
 display_name = "Raditz (Scout)"
+trigger_dialogue = true
+dialogue_key = &"raditz_intro"
 
 [node name="FriezaForceNPC" parent="Enemies" instance=ExtResource("3")]
 position = Vector2(700, 300)

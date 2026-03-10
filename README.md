@@ -7,6 +7,7 @@ This repository now includes a Godot 4.x vertical-slice foundation for a top-dow
 - Isometric world scene scaffold with:
   - player controller (`WASD` input),
   - enemy NPC interaction (`E` to challenge),
+  - optional pre-battle dialogue/cutscene flow with portraits,
   - world-to-battle transition signal flow.
 - Battle scene scaffold with:
   - battle controller,

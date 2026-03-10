@@ -1,6 +1,6 @@
 extends Node2D
 
-signal encounter_requested(enemy_id: StringName)
+signal encounter_requested(enemy_id: StringName, trigger_dialogue: bool, dialogue_key: StringName, display_name: String)
 
 @onready var prompt_label: Label = $CanvasLayer/Prompt
 
@@ -12,9 +12,9 @@ func _ready() -> void:
 			npc.body_entered.connect(_on_enemy_body_entered)
 			npc.body_exited.connect(_on_enemy_body_exited)
 
-func _on_enemy_interacted(enemy_id: StringName) -> void:
+func _on_enemy_interacted(enemy_id: StringName, trigger_dialogue: bool, dialogue_key: StringName, display_name: String) -> void:
 	prompt_label.visible = false
-	emit_signal("encounter_requested", enemy_id)
+	emit_signal("encounter_requested", enemy_id, trigger_dialogue, dialogue_key, display_name)
 
 func _on_enemy_body_entered(body: Node) -> void:
 	if body.is_in_group("player"):
