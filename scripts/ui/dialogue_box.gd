@@ -11,6 +11,8 @@ signal dialogue_finished
 
 var _lines: Array = []
 var _current_line_index: int = 0
+var _default_player_portrait: Texture2D
+var _default_npc_portrait: Texture2D
 
 func _ready() -> void:
 	visible = false
@@ -20,6 +22,8 @@ func _ready() -> void:
 func start_dialogue(player_texture: Texture2D, npc_texture: Texture2D, lines: Array) -> void:
 	_lines = lines
 	_current_line_index = 0
+	_default_player_portrait = player_texture
+	_default_npc_portrait = npc_texture
 	player_portrait.texture = player_texture
 	npc_portrait.texture = npc_texture
 	visible = true
@@ -52,7 +56,28 @@ func _show_current_line() -> void:
 
 	speaker_label.text = speaker
 	line_label.text = text
+	player_portrait.texture = _resolve_portrait(entry, "player_portrait", _default_player_portrait)
+	npc_portrait.texture = _resolve_portrait(entry, "npc_portrait", _default_npc_portrait)
 	_set_active_side(side)
+
+
+func _resolve_portrait(entry: Dictionary, key: String, fallback: Texture2D) -> Texture2D:
+	if not entry.has(key):
+		return fallback
+
+	var value: Variant = entry.get(key)
+	if value is Texture2D:
+		return value
+
+	if value is String:
+		var path := String(value)
+		if path == "":
+			return fallback
+		var loaded := load(path)
+		if loaded is Texture2D:
+			return loaded
+
+	return fallback
 
 func _set_active_side(side: String) -> void:
 	if side == "player":

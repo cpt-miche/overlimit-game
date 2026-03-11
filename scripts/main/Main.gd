@@ -31,7 +31,13 @@ var dialogue_data := {
 		"lines": [
 			{"speaker": "Martial Artist", "side": "npc", "text": "Hey. You move like someone who's trained hard."},
 			{"speaker": "You", "side": "player", "text": "I train to protect people, not to show off."},
-			{"speaker": "Martial Artist", "side": "npc", "text": "Good answer. Let's test your fundamentals in a spar."},
+			{
+				"speaker": "Martial Artist",
+				"side": "npc",
+				"text": "Good answer. Let's test your fundamentals in a spar.",
+				"player_portrait": preload("res://assets/sprites/player/player_fight.png"),
+				"npc_portrait": preload("res://assets/sprites/enemies/martial_artist_fight.png"),
+			},
 		],
 	},
 	&"raditz_intro": {
