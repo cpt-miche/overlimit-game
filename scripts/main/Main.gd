@@ -26,6 +26,14 @@ var enemy_map := {
 }
 
 var dialogue_data := {
+	&"martial_artist_intro": {
+		"npc_portrait": preload("res://assets/sprites/enemies/martial_artist_talk.png"),
+		"lines": [
+			{"speaker": "Martial Artist", "side": "npc", "text": "Hey. You move like someone who's trained hard."},
+			{"speaker": "You", "side": "player", "text": "I train to protect people, not to show off."},
+			{"speaker": "Martial Artist", "side": "npc", "text": "Good answer. Let's test your fundamentals in a spar."},
+		],
+	},
 	&"raditz_intro": {
 		"npc_portrait": preload("res://assets/sprites/enemies/raditz_idle.svg"),
 		"lines": [
@@ -36,7 +44,7 @@ var dialogue_data := {
 	},
 }
 
-var player_dialogue_portrait: Texture2D = preload("res://assets/sprites/player/player_idle.svg")
+var player_dialogue_portrait: Texture2D = preload("res://assets/sprites/player/player_talk.png")
 
 var active_enemy_id: StringName = &""
 var current_state: GameState = GameState.WORLD
