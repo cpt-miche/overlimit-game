@@ -25,10 +25,19 @@
       "side": "npc",
       "default_portrait": "res://assets/sprites/enemies/daigo_talk.png"
     },
+    "daigo_fight": {
+      "display_name": "Daigo",
+      "side": "npc",
+      "default_portrait": "res://assets/sprites/enemies/daigo_fight.png"
+    }    
     "renji": {
       "display_name": "Renji",
       "side": "npc",
       "default_portrait": "res://assets/sprites/enemies/daigo_talk.png"
     }
-  }
+    "renji_fight": {
+      "display_name": "Renji",
+      "side": "npc",
+      "default_portrait": "res://assets/sprites/enemies/daigo_fight.png"
+    }  }
 }
