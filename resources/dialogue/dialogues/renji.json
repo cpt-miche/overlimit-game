@@ -38,7 +38,7 @@
         },
         "accept": {
           "type": "line",
-          "speaker_id": "renji",
+          "speaker_id": "renji_fight",
           "text": "Good answer. Show me what you've got.",
           "next": "start_battle"
         },
@@ -49,7 +49,7 @@
         "decline": {
           "type": "line",
           "speaker_id": "renji",
-          "text": "Then train harder. I don't waste matches on hesitation.",
+          "text": "Aww, well let me know when you're ready.",
           "next": "leave"
         },
         "leave": {
