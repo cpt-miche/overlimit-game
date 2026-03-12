@@ -26,6 +26,14 @@ despawn_on_defeat = false
 trigger_dialogue = true
 dialogue_key = &"martial_artist_intro"
 
+[node name="DaigoNPC" parent="Enemies" instance=ExtResource("3")]
+position = Vector2(560, 300)
+enemy_id = &"daigo"
+display_name = "Daigo"
+despawn_on_defeat = false
+trigger_dialogue = true
+dialogue_key = &"daigo_intro"
+
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(640, 360)
 enabled = true

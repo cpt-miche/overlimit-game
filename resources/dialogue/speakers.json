@@ -19,6 +19,11 @@
       "display_name": "Martial Artist",
       "side": "npc",
       "default_portrait": "res://assets/sprites/enemies/martial_artist_fight.png"
+    },
+    "daigo": {
+      "display_name": "Daigo",
+      "side": "npc",
+      "default_portrait": "res://assets/sprites/enemies/daigo_talk.png"
     }
   }
 }
