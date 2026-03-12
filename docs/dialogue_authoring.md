@@ -5,7 +5,7 @@ Dialogue content is data-driven under `resources/dialogue/`.
 ## Files
 
 - `resources/dialogue/speakers.json` — speaker metadata and default portraits.
-- `resources/dialogue/dialogues.json` — dialogue graphs (nodes + links).
+- `resources/dialogue/dialogues/*.json` — dialogue graphs split by character/arc.
 - `resources/dialogue/localization/en.json` — localized string table (`text_key` -> text).
 
 ## Naming Conventions
@@ -18,7 +18,7 @@ Dialogue content is data-driven under `resources/dialogue/`.
 
 ## Fast Path: Linear Scene Authoring (No Localization Required)
 
-If your story is mostly linear, you can author dialogue under the optional `scenes` map in `resources/dialogue/dialogues.json`.
+If your story is mostly linear, you can author dialogue under the optional `scenes` map in any file under `resources/dialogue/dialogues/`.
 Each scene is automatically converted into nodes at load-time, so you only write line order and portraits.
 
 ```json
@@ -151,4 +151,3 @@ python scripts/tools/dialogue_import_export.py import-localization \
   --output resources/dialogue/localization/en.json \
   --locale en
 ```
-

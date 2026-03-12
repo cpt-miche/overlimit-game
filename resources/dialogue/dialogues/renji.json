@@ -1,0 +1,55 @@
+{
+  "dialogues": {
+    "renji_intro": {
+      "start": "intro_1",
+      "player_speaker_id": "player",
+      "npc_speaker_id": "renji",
+      "nodes": {
+        "intro_1": {
+          "type": "line",
+          "speaker_id": "renji",
+          "text": "So you're the fighter everyone's whispering about.",
+          "next": "intro_2"
+        },
+        "intro_2": {
+          "type": "line",
+          "speaker_id": "player",
+          "text": "Depends on who's doing the whispering.",
+          "next": "intro_3"
+        },
+        "intro_3": {
+          "type": "choice",
+          "choices": [
+            {
+              "text": "Let's spar.",
+              "next": "accept"
+            },
+            {
+              "text": "Maybe later.",
+              "next": "decline"
+            }
+          ]
+        },
+        "accept": {
+          "type": "line",
+          "speaker_id": "renji",
+          "text": "Good answer. Show me what you've got.",
+          "next": "start_battle"
+        },
+        "start_battle": {
+          "type": "event",
+          "action": "request_battle"
+        },
+        "decline": {
+          "type": "line",
+          "speaker_id": "renji",
+          "text": "Then train harder. I don't waste matches on hesitation.",
+          "next": "leave"
+        },
+        "leave": {
+          "type": "end"
+        }
+      }
+    }
+  }
+}

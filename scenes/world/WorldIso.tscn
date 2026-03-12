@@ -39,6 +39,8 @@ position = Vector2(650, 250)
 enemy_id = &"renji"
 display_name = "Renji"
 despawn_on_defeat = false
+trigger_dialogue = true
+dialogue_key = &"renji_intro"
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(640, 360)

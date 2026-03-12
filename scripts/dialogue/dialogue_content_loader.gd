@@ -1,24 +1,41 @@
 extends RefCounted
 
 const DIALOGUE_DIR := "res://resources/dialogue"
+const DIALOGUES_SUBDIR := "dialogues"
 
 var _validation_errors: PackedStringArray = PackedStringArray()
 
-func load_dialogues(path: String = "%s/dialogues.json" % DIALOGUE_DIR) -> Dictionary:
+func load_dialogues(path: String = "%s/%s" % [DIALOGUE_DIR, DIALOGUES_SUBDIR]) -> Dictionary:
 	_validation_errors.clear()
-	var parsed := _load_json(path)
-	if parsed.is_empty():
-		return {}
+	var output: Dictionary = {}
 
+	if path.ends_with(".json"):
+		var single_file := _load_json(path)
+		if single_file.is_empty():
+			return {}
+		_parse_dialogue_document(path, single_file, output)
+		return output
+
+	for file_path: String in _list_json_files(path):
+		var parsed := _load_json(file_path)
+		if parsed.is_empty():
+			continue
+		_parse_dialogue_document(file_path, parsed, output)
+
+	return output
+
+func _parse_dialogue_document(path: String, parsed: Dictionary, output: Dictionary) -> void:
 	var raw_dialogues: Variant = parsed.get("dialogues", {})
 	if raw_dialogues is not Dictionary:
 		_add_error(path, "Expected 'dialogues' to be a Dictionary.")
-		return {}
+		return
 	var raw_dialogues_dict: Dictionary = raw_dialogues
 
-	var output: Dictionary = {}
 	for dialogue_id_variant: Variant in raw_dialogues_dict.keys():
 		var dialogue_id := StringName(dialogue_id_variant)
+		if output.has(dialogue_id):
+			_add_error(path, "Duplicate dialogue id '%s' found across dialogue files." % String(dialogue_id))
+			continue
 		var parsed_sequence := _parse_dialogue_sequence(path, dialogue_id, raw_dialogues_dict[dialogue_id_variant])
 		if parsed_sequence != null:
 			output[dialogue_id] = parsed_sequence
@@ -29,7 +46,7 @@ func load_dialogues(path: String = "%s/dialogues.json" % DIALOGUE_DIR) -> Dictio
 		for scene_id_variant: Variant in raw_scenes_dict.keys():
 			var scene_id := StringName(scene_id_variant)
 			if output.has(scene_id):
-				_add_error(path, "Duplicate dialogue id '%s' found in both 'dialogues' and 'scenes'." % String(scene_id))
+				_add_error(path, "Duplicate dialogue id '%s' found across dialogue/scenes files." % String(scene_id))
 				continue
 			var scene_sequence := _parse_linear_scene(path, scene_id, raw_scenes_dict[scene_id_variant])
 			if scene_sequence != null:
@@ -37,7 +54,33 @@ func load_dialogues(path: String = "%s/dialogues.json" % DIALOGUE_DIR) -> Dictio
 	elif parsed.has("scenes"):
 		_add_error(path, "Expected 'scenes' to be a Dictionary.")
 
-	return output
+func _list_json_files(root_path: String) -> Array[String]:
+	var files: Array[String] = []
+	_collect_json_files(root_path, files)
+	files.sort()
+	return files
+
+func _collect_json_files(path: String, files: Array[String]) -> void:
+	var dir := DirAccess.open(path)
+	if dir == null:
+		_add_error(path, "Unable to open dialogue directory.")
+		return
+
+	dir.list_dir_begin()
+	while true:
+		var name := dir.get_next()
+		if name == "":
+			break
+		if name.begins_with("."):
+			continue
+
+		var full_path := "%s/%s" % [path, name]
+		if dir.current_is_dir():
+			_collect_json_files(full_path, files)
+			continue
+		if name.ends_with(".json"):
+			files.append(full_path)
+	dir.list_dir_end()
 
 func _parse_linear_scene(path: String, scene_id: StringName, raw_value: Variant) -> DialogueSequence:
 	if raw_value is not Dictionary:

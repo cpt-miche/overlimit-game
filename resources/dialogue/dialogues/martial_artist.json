@@ -55,7 +55,7 @@
               "next": "accept"
             },
             {
-              "text_key": "No, not right now",
+              "text": "No, not right now",
               "next": "decline_training"
             }
           ]
@@ -63,7 +63,7 @@
         "decline_training": {
           "type": "line",
           "speaker_id": "martial_artist",
-          "text_key": "Well then, come back when you're ready to spar.",
+          "text": "Well then, come back when you're ready to spar.",
           "next": "leave"
         },
         "accept": {
@@ -82,70 +82,6 @@
           "type": "end"
         }
       }
-    },
-    "daigo_intro": {
-      "start": "intro_1",
-      "player_speaker_id": "player",
-      "npc_speaker_id": "daigo",
-      "nodes": {
-        "intro_1": {
-          "type": "line",
-          "speaker_id": "daigo",
-          "text": "Hmmmmf...",
-          "next": "intro_2"
-        },
-        "intro_2": {
-          "type": "line",
-          "speaker_id": "player",
-          "text": "Hey, are you looking for a fight?",
-          "next": "intro_3"
-        },
-        "intro_3": {
-          "type": "line",
-          "speaker_id": "daigo_fight",
-          "text": "Hah. My strength far exceeds that martial artist you trained with, and unlike him, I can wield ki.",
-          "next": "intro_4"
-        },
-        "intro_4": {
-          "type": "line",
-          "speaker_id": "player_fight",
-          "text": "Then I'll see your power for myself.",
-          "next": "intro_5"
-        },
-        "intro_5": {
-          "type": "choice",
-          "choices": [
-            {
-              "text": "Bring it on, Daigo.",
-              "next": "accept"
-            },
-            {
-              "text": "I need more time.",
-              "next": "decline"
-            }
-          ]
-        },
-        "accept": {
-          "type": "line",
-          "speaker_id": "daigo",
-          "text": "Good. Try to keep up.",
-          "next": "start_battle"
-        },
-        "start_battle": {
-          "type": "event",
-          "action": "request_battle"
-        },
-        "decline": {
-          "type": "line",
-          "speaker_id": "daigo",
-          "text": "Hmph. Return when you're ready to face real ki control.",
-          "next": "leave"
-        },
-        "leave": {
-          "type": "end"
-        }
-      }
     }
-  },
-  "scenes": {}
+  }
 }
