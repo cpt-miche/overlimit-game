@@ -36,16 +36,16 @@ func close_dialogue() -> void:
 	panel.visible = false
 	_clear_choices()
 
-func display_line(view_model: Dictionary) -> void:
-	speaker_label.text = String(view_model.get("speaker", ""))
-	line_label.text = String(view_model.get("text", "..."))
-	player_portrait.texture = view_model.get("player_portrait", _default_player_portrait)
-	npc_portrait.texture = view_model.get("npc_portrait", _default_npc_portrait)
-	_set_active_side(String(view_model.get("side", "npc")))
+func display_line(view_model: DialoguePresentedLine) -> void:
+	speaker_label.text = view_model.speaker
+	line_label.text = view_model.text
+	player_portrait.texture = view_model.player_portrait if view_model.player_portrait != null else _default_player_portrait
+	npc_portrait.texture = view_model.npc_portrait if view_model.npc_portrait != null else _default_npc_portrait
+	_set_active_side(view_model.side)
 	continue_label.visible = true
 	_clear_choices()
 
-func display_choices(choices: Array) -> void:
+func display_choices(choices: Array[DialogueChoice]) -> void:
 	continue_label.visible = false
 	_clear_choices()
 	if choices.is_empty():
@@ -54,10 +54,10 @@ func display_choices(choices: Array) -> void:
 
 	_selected_choice = 0
 	for i: int in range(choices.size()):
-		var choice: Dictionary = choices[i]
+		var choice: DialogueChoice = choices[i]
 		var label := Label.new()
 		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		label.text = "  %d. %s" % [i + 1, String(choice.get("text", "..."))]
+		label.text = "  %d. %s" % [i + 1, choice.text]
 		vbox.add_child(label)
 		_choice_labels.append(label)
 	_update_choice_highlight()

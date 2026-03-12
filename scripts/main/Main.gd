@@ -76,6 +76,9 @@ func _setup_dialogue_runner() -> void:
 func _load_dialogue_content() -> void:
 	var loader: RefCounted = DialogueContentLoaderScript.new()
 	dialogue_data = loader.load_dialogues()
+	if loader.has_method("get_validation_errors"):
+		for error_message: String in loader.get_validation_errors():
+			push_warning(error_message)
 	speaker_registry_data = loader.load_speakers()
 	dialogue_localization = loader.load_localization()
 	if _dialogue_presenter != null:
@@ -150,23 +153,23 @@ func _start_optional_dialogue(enemy_id: StringName, dialogue_key: StringName, di
 	if key_to_use == &"":
 		key_to_use = StringName("%s_intro" % String(enemy_id))
 
-	var entry: Dictionary = dialogue_data.get(key_to_use, {})
-	if entry.is_empty():
+	var entry: DialogueSequence = dialogue_data.get(key_to_use, null)
+	if entry == null:
 		_start_battle(enemy_id)
 		return
 
-	var defaults: Dictionary = _dialogue_presenter.begin_dialogue(entry)
-	dialogue_box.open_dialogue(defaults.get("player_portrait", null), defaults.get("npc_portrait", null))
+	var defaults: DialogueSessionDefaults = _dialogue_presenter.begin_dialogue(entry)
+	dialogue_box.open_dialogue(defaults.player_portrait, defaults.npc_portrait)
 	_set_state(GameState.DIALOGUE)
 	_dialogue_runner.start(entry, {
 		"enemy_id": enemy_id,
 		"display_name": display_name,
 	})
 
-func _on_dialogue_line_ready(line: Dictionary) -> void:
+func _on_dialogue_line_ready(line: DialogueLine) -> void:
 	dialogue_box.display_line(_dialogue_presenter.present_line(line))
 
-func _on_dialogue_choices_ready(choices: Array) -> void:
+func _on_dialogue_choices_ready(choices: Array[DialogueChoice]) -> void:
 	dialogue_box.display_choices(choices)
 
 func _on_dialogue_continue_requested() -> void:

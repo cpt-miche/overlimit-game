@@ -2,11 +2,26 @@ extends RefCounted
 
 const DIALOGUE_DIR := "res://resources/dialogue"
 
+var _validation_errors: PackedStringArray = PackedStringArray()
+
 func load_dialogues(path: String = "%s/dialogues.json" % DIALOGUE_DIR) -> Dictionary:
+	_validation_errors.clear()
 	var parsed := _load_json(path)
 	if parsed.is_empty():
 		return {}
-	return _string_name_keyed_dictionary(parsed.get("dialogues", {}))
+
+	var raw_dialogues := parsed.get("dialogues", {})
+	if raw_dialogues is not Dictionary:
+		_add_error(path, "Expected 'dialogues' to be a Dictionary.")
+		return {}
+
+	var output: Dictionary = {}
+	for dialogue_id_variant: Variant in raw_dialogues.keys():
+		var dialogue_id := StringName(dialogue_id_variant)
+		var parsed_sequence := _parse_dialogue_sequence(path, dialogue_id, raw_dialogues[dialogue_id_variant])
+		if parsed_sequence != null:
+			output[dialogue_id] = parsed_sequence
+	return output
 
 func load_speakers(path: String = "%s/speakers.json" % DIALOGUE_DIR) -> Dictionary:
 	var parsed := _load_json(path)
@@ -19,6 +34,176 @@ func load_localization(path: String = "%s/localization/en.json" % DIALOGUE_DIR) 
 	if parsed.is_empty():
 		return {}
 	return _string_name_keyed_dictionary(parsed.get("entries", {}))
+
+func get_validation_errors() -> PackedStringArray:
+	return _validation_errors.duplicate()
+
+func _parse_dialogue_sequence(path: String, dialogue_id: StringName, raw_value: Variant) -> DialogueSequence:
+	if raw_value is not Dictionary:
+		_add_error(path, "Dialogue '%s' must be a Dictionary." % String(dialogue_id))
+		return null
+
+	var source: Dictionary = raw_value
+	var sequence := DialogueSequence.new()
+	sequence.id = dialogue_id
+	sequence.start_node_id = StringName(source.get("start", &""))
+	sequence.player_speaker_id = StringName(source.get("player_speaker_id", &""))
+	sequence.npc_speaker_id = StringName(source.get("npc_speaker_id", &""))
+	sequence.player_portrait = source.get("player_portrait", null)
+	sequence.npc_portrait = source.get("npc_portrait", null)
+
+	if sequence.start_node_id == &"":
+		_add_error(path, "Dialogue '%s' is missing a valid 'start' node id." % String(dialogue_id))
+
+	var raw_nodes := source.get("nodes", {})
+	if raw_nodes is not Dictionary:
+		_add_error(path, "Dialogue '%s' has invalid 'nodes' (expected Dictionary)." % String(dialogue_id))
+		return sequence
+
+	for node_id_variant: Variant in raw_nodes.keys():
+		var node_id := StringName(node_id_variant)
+		var node := _parse_dialogue_node(path, dialogue_id, node_id, raw_nodes[node_id_variant])
+		if node != null:
+			sequence.nodes[node_id] = node
+
+	if sequence.start_node_id != &"" and not sequence.nodes.has(sequence.start_node_id):
+		_add_error(path, "Dialogue '%s' start node '%s' does not exist in node graph." % [String(dialogue_id), String(sequence.start_node_id)])
+
+	return sequence
+
+func _parse_dialogue_node(path: String, dialogue_id: StringName, node_id: StringName, raw_value: Variant) -> DialogueNode:
+	if raw_value is not Dictionary:
+		_add_error(path, "Dialogue '%s' node '%s' must be a Dictionary." % [String(dialogue_id), String(node_id)])
+		return null
+
+	var source: Dictionary = raw_value
+	var node := DialogueNode.new()
+	node.id = node_id
+	node.node_type = StringName(source.get("type", "line"))
+	node.next_node_id = StringName(source.get("next", &""))
+	node.speaker_id = StringName(source.get("speaker_id", &""))
+	node.speaker = String(source.get("speaker", ""))
+	node.side = String(source.get("side", ""))
+	node.text = String(source.get("text", ""))
+	node.text_key = StringName(source.get("text_key", &""))
+	node.player_speaker_id = StringName(source.get("player_speaker_id", &""))
+	node.npc_speaker_id = StringName(source.get("npc_speaker_id", &""))
+	node.player_portrait = source.get("player_portrait", null)
+	node.npc_portrait = source.get("npc_portrait", null)
+	node.true_next_node_id = StringName(source.get("true_next", &""))
+	node.false_next_node_id = StringName(source.get("false_next", &""))
+	node.action = StringName(source.get("action", &""))
+	node.event_flags = _parse_bool_flag_dictionary(source.get("flags", {}))
+	node.enemy_id = StringName(source.get("enemy_id", &""))
+	node.target_node_id = StringName(source.get("target", &""))
+	node.condition = _parse_condition(path, dialogue_id, node_id, source.get("check", null))
+	node.choices = _parse_choices(path, dialogue_id, node_id, source.get("choices", []))
+
+	_validate_node_shape(path, dialogue_id, node)
+	return node
+
+func _parse_choices(path: String, dialogue_id: StringName, node_id: StringName, raw_choices: Variant) -> Array[DialogueChoice]:
+	var choices: Array[DialogueChoice] = []
+	if raw_choices == null:
+		return choices
+	if raw_choices is not Array:
+		_add_error(path, "Dialogue '%s' node '%s' choices must be an Array." % [String(dialogue_id), String(node_id)])
+		return choices
+
+	for i: int in range(raw_choices.size()):
+		var raw_choice: Variant = raw_choices[i]
+		if raw_choice is not Dictionary:
+			_add_error(path, "Dialogue '%s' node '%s' choice[%d] must be a Dictionary." % [String(dialogue_id), String(node_id), i])
+			continue
+
+		var source: Dictionary = raw_choice
+		var choice := DialogueChoice.new()
+		choice.text = String(source.get("text", ""))
+		choice.text_key = StringName(source.get("text_key", &""))
+		choice.next_node_id = StringName(source.get("next", &""))
+		choice.set_flags = _parse_bool_flag_dictionary(source.get("set_flags", {}))
+		if choice.next_node_id == &"":
+			_add_error(path, "Dialogue '%s' node '%s' choice[%d] must define 'next'." % [String(dialogue_id), String(node_id), i])
+		choices.append(choice)
+	return choices
+
+func _parse_condition(path: String, dialogue_id: StringName, node_id: StringName, raw_condition: Variant) -> DialogueCondition:
+	if raw_condition == null:
+		return null
+	if raw_condition is not Dictionary:
+		_add_error(path, "Dialogue '%s' node '%s' check must be a Dictionary." % [String(dialogue_id), String(node_id)])
+		return null
+
+	var source: Dictionary = raw_condition
+	var condition := DialogueCondition.new()
+	if source.has("all"):
+		condition.operator = &"all"
+		condition.children = _parse_condition_children(path, dialogue_id, node_id, "all", source["all"])
+		return condition
+	if source.has("any"):
+		condition.operator = &"any"
+		condition.children = _parse_condition_children(path, dialogue_id, node_id, "any", source["any"])
+		return condition
+	if source.has("not"):
+		condition.operator = &"not"
+		var child := _parse_condition(path, dialogue_id, node_id, source["not"])
+		if child != null:
+			condition.children.append(child)
+		else:
+			_add_error(path, "Dialogue '%s' node '%s' has invalid 'not' check." % [String(dialogue_id), String(node_id)])
+		return condition
+
+	condition.operator = &"kind"
+	condition.kind = StringName(source.get("kind", &""))
+	condition.id = StringName(source.get("id", &""))
+	if condition.kind == &"":
+		_add_error(path, "Dialogue '%s' node '%s' condition is missing 'kind'." % [String(dialogue_id), String(node_id)])
+	if condition.id == &"":
+		_add_error(path, "Dialogue '%s' node '%s' condition is missing 'id'." % [String(dialogue_id), String(node_id)])
+	return condition
+
+func _parse_condition_children(path: String, dialogue_id: StringName, node_id: StringName, key: String, raw_children: Variant) -> Array[DialogueCondition]:
+	var children: Array[DialogueCondition] = []
+	if raw_children is not Array:
+		_add_error(path, "Dialogue '%s' node '%s' condition '%s' must be an Array." % [String(dialogue_id), String(node_id), key])
+		return children
+	for raw_child: Variant in raw_children:
+		var child := _parse_condition(path, dialogue_id, node_id, raw_child)
+		if child != null:
+			children.append(child)
+	return children
+
+func _parse_bool_flag_dictionary(raw_flags: Variant) -> Dictionary:
+	if raw_flags is not Dictionary:
+		return {}
+	var flags: Dictionary = {}
+	for key: Variant in raw_flags.keys():
+		flags[StringName(key)] = bool(raw_flags[key])
+	return flags
+
+func _validate_node_shape(path: String, dialogue_id: StringName, node: DialogueNode) -> void:
+	match String(node.node_type):
+		"line":
+			if node.next_node_id == &"":
+				_add_error(path, "Dialogue '%s' line node '%s' must define 'next'." % [String(dialogue_id), String(node.id)])
+		"choice":
+			if node.choices.is_empty():
+				_add_error(path, "Dialogue '%s' choice node '%s' has no valid choices." % [String(dialogue_id), String(node.id)])
+		"condition":
+			if node.condition == null:
+				_add_error(path, "Dialogue '%s' condition node '%s' is missing 'check'." % [String(dialogue_id), String(node.id)])
+			if node.true_next_node_id == &"" or node.false_next_node_id == &"":
+				_add_error(path, "Dialogue '%s' condition node '%s' must define both true_next and false_next." % [String(dialogue_id), String(node.id)])
+		"event":
+			if node.action == &"":
+				_add_error(path, "Dialogue '%s' event node '%s' is missing 'action'." % [String(dialogue_id), String(node.id)])
+		"jump":
+			if node.target_node_id == &"":
+				_add_error(path, "Dialogue '%s' jump node '%s' is missing 'target'." % [String(dialogue_id), String(node.id)])
+		"end":
+			pass
+		_:
+			_add_error(path, "Dialogue '%s' node '%s' has unknown type '%s'." % [String(dialogue_id), String(node.id), String(node.node_type)])
 
 func _load_json(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
@@ -49,3 +234,8 @@ func _string_name_keyed_dictionary(source: Variant) -> Dictionary:
 	for key: Variant in source_dict.keys():
 		output[StringName(key)] = source_dict[key]
 	return output
+
+func _add_error(path: String, message: String) -> void:
+	var formatted := "%s: %s" % [path, message]
+	_validation_errors.append(formatted)
+	push_warning(formatted)

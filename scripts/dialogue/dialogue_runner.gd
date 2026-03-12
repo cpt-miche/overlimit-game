@@ -1,12 +1,12 @@
 extends Node
 
-signal line_ready(line: Dictionary)
-signal choices_ready(choices: Array)
+signal line_ready(line: DialogueLine)
+signal choices_ready(choices: Array[DialogueChoice])
 signal dialogue_completed
 signal battle_requested(enemy_id: StringName)
 
 var current_node: StringName = &""
-var current_choices: Array = []
+var current_choices: Array[DialogueChoice] = []
 var flags: Dictionary = {}
 
 var _dialogue_nodes: Dictionary = {}
@@ -21,14 +21,20 @@ func set_state_query(state_query: GameStateQuery) -> void:
 func set_localization(localization: RefCounted) -> void:
 	_localization = localization
 
-func start(dialogue_schema: Dictionary, context: Dictionary = {}) -> void:
-	_dialogue_nodes = dialogue_schema.get("nodes", {})
+func start(dialogue_sequence: DialogueSequence, context: Dictionary = {}) -> void:
 	_context = context.duplicate(true)
 	current_choices = []
 	flags = {}
 	_running = true
 
-	var start_node: StringName = StringName(dialogue_schema.get("start", &""))
+	if dialogue_sequence == null:
+		_dialogue_nodes = {}
+		_complete_dialogue()
+		return
+
+	_dialogue_nodes = dialogue_sequence.nodes
+
+	var start_node: StringName = dialogue_sequence.start_node_id
 	if start_node == &"":
 		_complete_dialogue()
 		return
@@ -51,22 +57,21 @@ func choose(choice_index: int) -> void:
 		push_warning("Dialogue choice index out of bounds: %d" % choice_index)
 		return
 
-	var choice: Dictionary = current_choices[choice_index]
-	_apply_flag_changes(choice.get("set_flags", {}))
+	var choice: DialogueChoice = current_choices[choice_index]
+	_apply_flag_changes(choice.set_flags)
 	current_choices = []
-	current_node = StringName(choice.get("next", &""))
+	current_node = choice.next_node_id
 	_process_until_input()
 
 func _process_until_input() -> void:
 	while _running:
-		var node: Dictionary = _dialogue_nodes.get(current_node, {})
-		if node.is_empty():
+		var node: DialogueNode = _dialogue_nodes.get(current_node, null)
+		if node == null:
 			push_warning("Dialogue node not found: %s" % String(current_node))
 			_complete_dialogue()
 			return
 
-		var node_type: String = String(node.get("type", "line"))
-		match node_type:
+		match String(node.node_type):
 			"line":
 				_emit_line(node)
 				return
@@ -74,8 +79,8 @@ func _process_until_input() -> void:
 				_emit_choices(node)
 				return
 			"condition":
-				var passed := _evaluate_condition(node.get("check", {}))
-				current_node = StringName(node.get("true_next", &"")) if passed else StringName(node.get("false_next", &""))
+				var passed := _evaluate_condition(node.condition)
+				current_node = node.true_next_node_id if passed else node.false_next_node_id
 				if current_node == &"":
 					_complete_dialogue()
 					return
@@ -84,7 +89,7 @@ func _process_until_input() -> void:
 				if not _running:
 					return
 			"jump":
-				current_node = StringName(node.get("target", &""))
+				current_node = node.target_node_id
 				if current_node == &"":
 					_complete_dialogue()
 					return
@@ -92,67 +97,63 @@ func _process_until_input() -> void:
 				_complete_dialogue()
 				return
 			_:
-				push_warning("Unknown dialogue node type: %s" % node_type)
+				push_warning("Unknown dialogue node type: %s" % String(node.node_type))
 				_complete_dialogue()
 				return
 
 func _step_to_next_node() -> void:
-	var node: Dictionary = _dialogue_nodes.get(current_node, {})
-	current_node = StringName(node.get("next", &""))
+	var node: DialogueNode = _dialogue_nodes.get(current_node, null)
+	if node == null:
+		_complete_dialogue()
+		return
+	current_node = node.next_node_id
 	if current_node == &"":
 		_complete_dialogue()
 
-func _emit_line(node: Dictionary) -> void:
-	var line_payload := {
-		"speaker_id": StringName(node.get("speaker_id", &"")),
-		"speaker": String(node.get("speaker", "")),
-		"side": String(node.get("side", "")),
-		"text": _resolve_text(node, "..."),
-		"player_speaker_id": StringName(node.get("player_speaker_id", &"")),
-		"npc_speaker_id": StringName(node.get("npc_speaker_id", &"")),
-		"player_portrait": node.get("player_portrait", null),
-		"npc_portrait": node.get("npc_portrait", null),
-	}
+func _emit_line(node: DialogueNode) -> void:
+	var line_payload := DialogueLine.new()
+	line_payload.speaker_id = node.speaker_id
+	line_payload.speaker = node.speaker
+	line_payload.side = node.side
+	line_payload.text = _resolve_text(node.text, node.text_key, "...")
+	line_payload.text_key = node.text_key
+	line_payload.player_speaker_id = node.player_speaker_id
+	line_payload.npc_speaker_id = node.npc_speaker_id
+	line_payload.player_portrait = node.player_portrait
+	line_payload.npc_portrait = node.npc_portrait
 	emit_signal("line_ready", line_payload)
 
-func _emit_choices(node: Dictionary) -> void:
+func _emit_choices(node: DialogueNode) -> void:
 	current_choices = []
-	for entry: Variant in node.get("choices", []):
-		if entry is Dictionary:
-			var resolved_choice: Dictionary = entry.duplicate(true)
-			resolved_choice["text"] = _resolve_text(entry, "...")
-			current_choices.append(resolved_choice)
+	for choice: DialogueChoice in node.choices:
+		var resolved_choice := choice.clone()
+		resolved_choice.text = _resolve_text(choice.text, choice.text_key, "...")
+		current_choices.append(resolved_choice)
 	emit_signal("choices_ready", current_choices)
 
-func _resolve_text(entry: Variant, fallback: String) -> String:
-	if entry is not Dictionary:
-		return fallback
-	var entry_dict: Dictionary = entry
-	var fallback_text := String(entry_dict.get("text", fallback))
-	if not entry_dict.has("text_key"):
-		return fallback_text
-
-	var text_key := StringName(entry_dict.get("text_key", &""))
+func _resolve_text(text: String, text_key: StringName, fallback: String) -> String:
+	var fallback_text := text if text != "" else fallback
 	if text_key == &"":
 		return fallback_text
 	if _localization != null and _localization.has_method("resolve_text"):
 		return _localization.resolve_text(text_key, fallback_text)
 	return fallback_text
 
-func _handle_event(node: Dictionary) -> void:
-	var action: String = String(node.get("action", ""))
-	match action:
+func _handle_event(node: DialogueNode) -> void:
+	match String(node.action):
 		"set_flags":
-			_apply_flag_changes(node.get("flags", {}))
+			_apply_flag_changes(node.event_flags)
 		"request_battle":
-			var enemy_id := StringName(node.get("enemy_id", _context.get("enemy_id", &"")))
+			var enemy_id := node.enemy_id
+			if enemy_id == &"":
+				enemy_id = StringName(_context.get("enemy_id", &""))
 			emit_signal("battle_requested", enemy_id)
 			_running = false
 			return
 		_:
-			push_warning("Unhandled dialogue event action: %s" % action)
+			push_warning("Unhandled dialogue event action: %s" % String(node.action))
 
-	current_node = StringName(node.get("next", &""))
+	current_node = node.next_node_id
 	if current_node == &"":
 		_complete_dialogue()
 
@@ -160,42 +161,46 @@ func _apply_flag_changes(flag_changes: Variant) -> void:
 	if flag_changes is not Dictionary:
 		return
 	for key: Variant in flag_changes.keys():
-		flags[key] = bool(flag_changes[key])
+		flags[StringName(key)] = bool(flag_changes[key])
 
-func _evaluate_condition(check: Variant) -> bool:
-	if check is Dictionary:
-		var check_dict: Dictionary = check
-		if check_dict.has("all"):
-			for child_check: Variant in check_dict["all"]:
-				if not _evaluate_condition(child_check):
+func _evaluate_condition(condition: DialogueCondition) -> bool:
+	if condition == null:
+		return false
+
+	match String(condition.operator):
+		"all":
+			for child: DialogueCondition in condition.children:
+				if not _evaluate_condition(child):
 					return false
 			return true
-		if check_dict.has("any"):
-			for child_check: Variant in check_dict["any"]:
-				if _evaluate_condition(child_check):
+		"any":
+			for child: DialogueCondition in condition.children:
+				if _evaluate_condition(child):
 					return true
 			return false
-		if check_dict.has("not"):
-			return not _evaluate_condition(check_dict["not"])
-
-		var kind: String = String(check_dict.get("kind", ""))
-		var id: StringName = StringName(check_dict.get("id", &""))
-		match kind:
-			"local_flag", "quest_flag":
-				if flags.has(id):
-					return bool(flags[id])
-				return _state_query != null and _state_query.has_quest_flag(id)
-			"prior_victory":
-				if _state_query == null:
+		"not":
+			if condition.children.is_empty():
+				return true
+			return not _evaluate_condition(condition.children[0])
+		"kind":
+			var id := condition.id
+			match String(condition.kind):
+				"local_flag", "quest_flag":
+					if flags.has(id):
+						return bool(flags[id])
+					return _state_query != null and _state_query.has_quest_flag(id)
+				"prior_victory":
+					if _state_query == null:
+						return false
+					return _state_query.has_prior_victory(id)
+				"inventory_item":
+					if _state_query == null:
+						return false
+					return _state_query.has_inventory_item(id)
+				_:
 					return false
-				return _state_query.has_prior_victory(id)
-			"inventory_item":
-				if _state_query == null:
-					return false
-				return _state_query.has_inventory_item(id)
-			_:
-				return false
-	return false
+		_:
+			return false
 
 func _complete_dialogue() -> void:
 	_running = false
