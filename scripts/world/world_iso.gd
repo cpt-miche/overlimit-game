@@ -28,7 +28,10 @@ func mark_enemy_defeated(enemy_id: StringName) -> void:
 	for npc: Node in $Enemies.get_children():
 		if npc.get("enemy_id") != enemy_id:
 			continue
-		if not bool(npc.get("despawn_on_defeat", true)):
+		var despawn_on_defeat: Variant = npc.get("despawn_on_defeat")
+		if despawn_on_defeat == null:
+			despawn_on_defeat = true
+		if not bool(despawn_on_defeat):
 			continue
 		npc.queue_free()
 		break
