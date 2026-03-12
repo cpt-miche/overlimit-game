@@ -28,6 +28,8 @@ extends Resource
 
 var escalation: float = 0.0
 var active_shuten_transformation_id: StringName = &""
+var enrage_turns_remaining: int = 0
+var exhausted_turns_remaining: int = 0
 var form_level: int = 0
 var highest_form_rewarded_this_rest: int = 0
 var active_form_transformation_id: StringName = &""
@@ -56,6 +58,8 @@ func duplicate_runtime() -> FighterStats:
 	copy.transformation_skill_ids = transformation_skill_ids.duplicate()
 	copy.base_form_override_level = base_form_override_level
 	copy.form_mastery_level = form_mastery_level
+	copy.enrage_turns_remaining = enrage_turns_remaining
+	copy.exhausted_turns_remaining = exhausted_turns_remaining
 	copy.form_level = base_form_override_level
 	copy.highest_form_rewarded_this_rest = base_form_override_level
 	copy.base_max_stamina = max_stamina

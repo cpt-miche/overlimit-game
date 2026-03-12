@@ -1,5 +1,11 @@
 extends Node
 
+const ENRAGE_STRENGTH_SPEED_MULT := 1.30
+const ENRAGE_EXHAUSTED_MULT := 0.90
+const ENRAGE_TURNS := 3
+const EXHAUSTED_TURNS := 2
+const ENRAGE_STAMINA_DRAIN_PCT := 0.10
+
 signal battle_finished(result: String)
 
 @export var player_base: FighterStats
@@ -106,7 +112,7 @@ func _has_player_completed_turn_actions() -> bool:
 	return player_used_primary_action and player_used_secondary_action
 
 func _get_action_type(action_id: StringName) -> String:
-	if action_id == &"power_up" or action_id == &"transform_form" or action_id == &"shuten_gate_1" or action_id == &"shuten_gate_2" or action_id == &"shuten_gate_3":
+	if action_id == &"power_up" or action_id == &"transform_form" or action_id == &"shuten_gate_1" or action_id == &"shuten_gate_2" or action_id == &"shuten_gate_3" or action_id == &"enrage":
 		return "secondary"
 	return "primary"
 
@@ -138,7 +144,7 @@ func _choose_enemy_action_for_slot(action_type: String, enemy_infusion: float) -
 				return candidate
 		return &""
 
-	var secondary_candidates: Array[StringName] = [&"transform_form", &"shuten_gate_1", &"power_up"]
+	var secondary_candidates: Array[StringName] = [&"transform_form", &"shuten_gate_1", &"enrage", &"power_up"]
 	for candidate in secondary_candidates:
 		if _can_enemy_use_action(candidate, enemy_infusion):
 			return candidate
@@ -163,6 +169,10 @@ func _can_enemy_use_action(action_id: StringName, action_infusion: float) -> boo
 			return false
 		var next_form := _get_next_form_transformation(state.enemy)
 		return next_form != null and next_form.can_activate(state.enemy)
+	if action_id == &"enrage":
+		if not state.enemy.has_utility_skill(&"enrage"):
+			return false
+		return state.enemy.enrage_turns_remaining <= 0 and state.enemy.exhausted_turns_remaining <= 0
 	if action_id == &"shuten_gate_1":
 		if not state.enemy.has_utility_skill(&"shuten") or not state.enemy.has_transformation_skill(&"shuten_gate_1"):
 			return false
@@ -181,6 +191,9 @@ func _process_action(actor: FighterStats, target: FighterStats, action_id: Strin
 			return _activate_shuten_gate(actor, action_id)
 		&"transform_form":
 			_transform_higher_form(actor)
+			return true
+		&"enrage":
+			_enrage(actor)
 			return true
 		_:
 			if not attacks.has(action_id) or not actor.has_attack_skill(action_id):
@@ -203,6 +216,8 @@ func _apply_end_round() -> void:
 	_apply_form_upkeep(state.enemy)
 	_apply_shuten_upkeep(state.player)
 	_apply_shuten_upkeep(state.enemy)
+	_apply_enrage_upkeep(state.player)
+	_apply_enrage_upkeep(state.enemy)
 	state.player.stamina = clampi(state.player.stamina + 10, 0, state.player.max_stamina)
 	state.enemy.stamina = clampi(state.enemy.stamina + 10, 0, state.enemy.max_stamina)
 	state.player.clamp_resources()
@@ -220,6 +235,38 @@ func _power_up(fighter: FighterStats) -> void:
 	fighter.drawn_ki += amount
 	fighter.escalation += 5
 	_log("%s powers up (+%d drawn ki)." % [fighter.fighter_name, amount])
+
+
+func _enrage(fighter: FighterStats) -> void:
+	if not fighter.has_utility_skill(&"enrage"):
+		_log("%s cannot use Enrage." % fighter.fighter_name)
+		return
+	if fighter.enrage_turns_remaining > 0:
+		_log("%s is already enraged." % fighter.fighter_name)
+		return
+	if fighter.exhausted_turns_remaining > 0:
+		_log("%s is too exhausted to enrage." % fighter.fighter_name)
+		return
+	fighter.enrage_turns_remaining = ENRAGE_TURNS
+	_apply_form_scaling(fighter, false)
+	_log("%s uses Enrage! +30%% strength/speed, -10%% accuracy for %d turns." % [fighter.fighter_name, ENRAGE_TURNS])
+
+func _apply_enrage_upkeep(fighter: FighterStats) -> void:
+	if fighter.enrage_turns_remaining > 0:
+		var stamina_upkeep := int(round(float(fighter.max_stamina) * ENRAGE_STAMINA_DRAIN_PCT))
+		fighter.stamina -= stamina_upkeep
+		fighter.enrage_turns_remaining -= 1
+		if stamina_upkeep > 0:
+			_log("%s Enrage upkeep: -%d stamina." % [fighter.fighter_name, stamina_upkeep])
+		if fighter.enrage_turns_remaining <= 0:
+			fighter.exhausted_turns_remaining = EXHAUSTED_TURNS
+			_log("%s's Enrage fades. Exhausted for %d turns." % [fighter.fighter_name, EXHAUSTED_TURNS])
+			_apply_form_scaling(fighter, false)
+	elif fighter.exhausted_turns_remaining > 0:
+		fighter.exhausted_turns_remaining -= 1
+		if fighter.exhausted_turns_remaining <= 0:
+			_log("%s is no longer exhausted." % fighter.fighter_name)
+			_apply_form_scaling(fighter, false)
 
 func _transform_higher_form(fighter: FighterStats) -> void:
 	if not fighter.has_utility_skill(&"transform_form"):
@@ -338,6 +385,14 @@ func _apply_form_scaling(fighter: FighterStats, preserve_stamina_ratio: bool) ->
 		ki_mult *= shuten.strength_multiplier
 		speed_mult *= shuten.speed_multiplier
 		stamina_mult *= shuten.max_stamina_multiplier
+	if fighter.enrage_turns_remaining > 0:
+		physical_mult *= ENRAGE_STRENGTH_SPEED_MULT
+		ki_mult *= ENRAGE_STRENGTH_SPEED_MULT
+		speed_mult *= ENRAGE_STRENGTH_SPEED_MULT
+	elif fighter.exhausted_turns_remaining > 0:
+		physical_mult *= ENRAGE_EXHAUSTED_MULT
+		ki_mult *= ENRAGE_EXHAUSTED_MULT
+		speed_mult *= ENRAGE_EXHAUSTED_MULT
 
 	fighter.physical_strength = int(round(float(fighter.base_physical_strength) * physical_mult))
 	fighter.ki_strength = int(round(float(fighter.base_ki_strength) * ki_mult))
@@ -453,6 +508,8 @@ func _fighter_stat_lines(f: FighterStats) -> PackedStringArray:
 		"Form Mastery: %d" % f.form_mastery_level,
 		"Shuten Active: %s" % ("Yes" if f.active_shuten_transformation_id != &"" else "No"),
 		"Active Shuten Gate: %s" % String(f.active_shuten_transformation_id),
+		"Enrage Turns: %d" % f.enrage_turns_remaining,
+		"Exhausted Turns: %d" % f.exhausted_turns_remaining,
 	])
 
 
@@ -484,6 +541,7 @@ func _fighter_debug_lines(f: FighterStats) -> PackedStringArray:
 		"Ki: %d (base %d)" % [f.ki_strength, f.base_ki_strength],
 		"Speed: %d (base %d)" % [f.speed, f.base_speed],
 		"Form: %d | Active: %s | Shuten: %s" % [f.form_level, String(f.active_form_transformation_id), String(f.active_shuten_transformation_id)],
+		"Enrage: %d turns | Exhausted: %d turns" % [f.enrage_turns_remaining, f.exhausted_turns_remaining],
 		"Attack Skills: %s" % _join_skill_ids(f.attack_skill_ids),
 		"Utility Skills: %s" % _join_skill_ids(f.utility_skill_ids),
 		"Transformation Skills: %s" % _join_skill_ids(f.transformation_skill_ids),

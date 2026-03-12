@@ -15,6 +15,8 @@ const HIT_CHANCE_LOW_EXP := 1.0
 const HIT_CHANCE_HIGH_EXP := 1.0
 const LOG2 := log(2.0)
 
+const ENRAGE_ACCURACY_PENALTY := 0.10
+
 const FORM_DR_BONUS := {
 	0: 0.00, # Base
 	1: 0.15, # Godwake
@@ -49,6 +51,12 @@ func get_hit_chance_from_speed(attacker_speed: int, defender_speed: int, low_exp
 	var faster_progress := x
 	var faster_curve := pow(faster_progress, high_exp)
 	return lerpf(HIT_CHANCE_BASE, HIT_CHANCE_MAX, faster_curve)
+
+
+func get_accuracy_modifier(attacker: FighterStats) -> float:
+	if attacker.enrage_turns_remaining > 0:
+		return -ENRAGE_ACCURACY_PENALTY
+	return 0.0
 
 func try_vanish(attacker: FighterStats, defender: FighterStats, attack: AttackDef, rng: RandomNumberGenerator) -> Dictionary:
 	var vanish_cost := get_vanish_cost(attack.attack_tier)
@@ -105,7 +113,7 @@ func resolve_attack(attacker: FighterStats, defender: FighterStats, attack: Atta
 	var speed_hit_chance := get_hit_chance_from_speed(effective_attacker_speed, defender.speed)
 	var speed_hit_delta := speed_hit_chance - HIT_CHANCE_BASE
 	var hit_chance := attack.base_hit + speed_hit_delta
-	hit_chance = clampf(hit_chance + infusion_ratio * 0.08, HIT_CHANCE_MIN, HIT_CHANCE_MAX)
+	hit_chance = clampf(hit_chance + infusion_ratio * 0.08 + get_accuracy_modifier(attacker), HIT_CHANCE_MIN, HIT_CHANCE_MAX)
 	if rng.randf() > hit_chance:
 		return {"ok": true, "result": "miss"}
 
