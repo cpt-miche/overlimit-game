@@ -12,10 +12,14 @@ var flags: Dictionary = {}
 var _dialogue_nodes: Dictionary = {}
 var _context: Dictionary = {}
 var _state_query: GameStateQuery
+var _localization: RefCounted
 var _running: bool = false
 
 func set_state_query(state_query: GameStateQuery) -> void:
 	_state_query = state_query
+
+func set_localization(localization: RefCounted) -> void:
+	_localization = localization
 
 func start(dialogue_schema: Dictionary, context: Dictionary = {}) -> void:
 	_dialogue_nodes = dialogue_schema.get("nodes", {})
@@ -103,7 +107,7 @@ func _emit_line(node: Dictionary) -> void:
 		"speaker_id": StringName(node.get("speaker_id", &"")),
 		"speaker": String(node.get("speaker", "")),
 		"side": String(node.get("side", "")),
-		"text": String(node.get("text", "...")),
+		"text": _resolve_text(node, "..."),
 		"player_speaker_id": StringName(node.get("player_speaker_id", &"")),
 		"npc_speaker_id": StringName(node.get("npc_speaker_id", &"")),
 		"player_portrait": node.get("player_portrait", null),
@@ -115,8 +119,25 @@ func _emit_choices(node: Dictionary) -> void:
 	current_choices = []
 	for entry: Variant in node.get("choices", []):
 		if entry is Dictionary:
-			current_choices.append(entry)
+			var resolved_choice: Dictionary = entry.duplicate(true)
+			resolved_choice["text"] = _resolve_text(entry, "...")
+			current_choices.append(resolved_choice)
 	emit_signal("choices_ready", current_choices)
+
+func _resolve_text(entry: Variant, fallback: String) -> String:
+	if entry is not Dictionary:
+		return fallback
+	var entry_dict: Dictionary = entry
+	var fallback_text := String(entry_dict.get("text", fallback))
+	if not entry_dict.has("text_key"):
+		return fallback_text
+
+	var text_key := StringName(entry_dict.get("text_key", &""))
+	if text_key == &"":
+		return fallback_text
+	if _localization != null and _localization.has_method("resolve_text"):
+		return _localization.resolve_text(text_key, fallback_text)
+	return fallback_text
 
 func _handle_event(node: Dictionary) -> void:
 	var action: String = String(node.get("action", ""))

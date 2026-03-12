@@ -3,6 +3,8 @@ extends Node
 const DialogueRunnerScript = preload("res://scripts/dialogue/dialogue_runner.gd")
 const DialoguePresenterScript = preload("res://scripts/dialogue/dialogue_presenter.gd")
 const SpeakerRegistryScript = preload("res://scripts/dialogue/speaker_registry.gd")
+const DialogueContentLoaderScript = preload("res://scripts/dialogue/dialogue_content_loader.gd")
+const DialogueLocalizationScript = preload("res://scripts/dialogue/dialogue_localization.gd")
 const MainGameStateQuery = preload("res://scripts/main/main_game_state_query.gd")
 
 enum GameState {
@@ -30,80 +32,9 @@ var enemy_map := {
 	&"frieza": preload("res://resources/fighters/frieza.tres"),
 }
 
-var speaker_registry_data := {
-	&"player": {
-		"display_name": "You",
-		"side": "player",
-		"default_portrait": preload("res://assets/sprites/player/player_talk.png"),
-	},
-	&"player_fight": {
-		"display_name": "You",
-		"side": "player",
-		"default_portrait": preload("res://assets/sprites/player/player_fight.png"),
-	},
-	&"martial_artist": {
-		"display_name": "Martial Artist",
-		"side": "npc",
-		"default_portrait": preload("res://assets/sprites/enemies/martial_artist_talk.png"),
-	},
-	&"martial_artist_battle": {
-		"display_name": "Martial Artist",
-		"side": "npc",
-		"default_portrait": preload("res://assets/sprites/enemies/martial_artist_fight.png"),
-	},
-	&"raditz": {
-		"display_name": "Raditz",
-		"side": "npc",
-		"default_portrait": preload("res://assets/sprites/enemies/raditz_idle.svg"),
-	},
-}
-
-var dialogue_data := {
-	&"martial_artist_intro": {
-		"start": "intro_1",
-		"player_speaker_id": "player",
-		"npc_speaker_id": "martial_artist",
-		"nodes": {
-			"intro_1": {"type": "line", "speaker_id": "martial_artist", "text": "Hey. You move like someone who's trained hard.", "next": "intro_2"},
-			"intro_2": {"type": "line", "speaker_id": "player", "text": "I train to protect people, not to show off.", "next": "intro_3"},
-			"intro_3": {
-				"type": "choice",
-				"choices": [
-					{"text": "I accept your spar.", "next": "accept"},
-					{"text": "Only if this helps my training.", "next": "ask_training", "set_flags": {"took_training_path": true}},
-				],
-			},
-			"ask_training": {"type": "line", "speaker_id": "martial_artist", "text": "A focused spar always helps.", "next": "accept"},
-			"accept": {
-				"type": "line",
-				"speaker_id": "martial_artist_battle",
-				"text": "Good answer. Let's test your fundamentals in a spar.",
-				"player_speaker_id": "player_fight",
-				"npc_speaker_id": "martial_artist_battle",
-				"next": "start_battle",
-			},
-			"start_battle": {"type": "event", "action": "request_battle"},
-		},
-	},
-	&"raditz_intro": {
-		"start": "check_victory",
-		"player_speaker_id": "player",
-		"npc_speaker_id": "raditz",
-		"nodes": {
-			"check_victory": {
-				"type": "condition",
-				"check": {"kind": "prior_victory", "id": "raditz_scout"},
-				"true_next": "rematch_line",
-				"false_next": "intro_1",
-			},
-			"intro_1": {"type": "line", "speaker_id": "raditz", "text": "Kakarot's weakling friend? You're in my way.", "next": "intro_2"},
-			"intro_2": {"type": "line", "speaker_id": "player", "text": "I'm done letting raiders run this place.", "next": "intro_3"},
-			"intro_3": {"type": "line", "speaker_id": "raditz", "text": "Show me if you've got Saiyan blood to back that up.", "next": "battle_event"},
-			"rematch_line": {"type": "line", "speaker_id": "raditz", "text": "You again? Then prove the first win wasn't luck.", "next": "battle_event"},
-			"battle_event": {"type": "event", "action": "request_battle"},
-		},
-	},
-}
+var speaker_registry_data: Dictionary = {}
+var dialogue_data: Dictionary = {}
+var dialogue_localization: Dictionary = {}
 
 var active_enemy_id: StringName = &""
 var current_state: GameState = GameState.WORLD
@@ -121,6 +52,7 @@ func _ready() -> void:
 	eat_button.pressed.connect(_eat_outside_battle)
 	dialogue_box.continue_requested.connect(_on_dialogue_continue_requested)
 	dialogue_box.choice_selected.connect(_on_dialogue_choice_selected)
+	_load_dialogue_content()
 	_setup_dialogue_runner()
 	battle.visible = false
 	stat_screen.visible = false
@@ -137,6 +69,23 @@ func _setup_dialogue_runner() -> void:
 	var speaker_registry: RefCounted = SpeakerRegistryScript.new()
 	speaker_registry.configure(speaker_registry_data)
 	_dialogue_presenter = DialoguePresenterScript.new(speaker_registry)
+	var localization: RefCounted = DialogueLocalizationScript.new()
+	localization.configure(dialogue_localization)
+	_dialogue_runner.set_localization(localization)
+
+func _load_dialogue_content() -> void:
+	var loader: RefCounted = DialogueContentLoaderScript.new()
+	dialogue_data = loader.load_dialogues()
+	speaker_registry_data = loader.load_speakers()
+	dialogue_localization = loader.load_localization()
+	if _dialogue_presenter != null:
+		var speaker_registry: RefCounted = SpeakerRegistryScript.new()
+		speaker_registry.configure(speaker_registry_data)
+		_dialogue_presenter = DialoguePresenterScript.new(speaker_registry)
+	if _dialogue_runner != null:
+		var localization: RefCounted = DialogueLocalizationScript.new()
+		localization.configure(dialogue_localization)
+		_dialogue_runner.set_localization(localization)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if current_state == GameState.DIALOGUE:

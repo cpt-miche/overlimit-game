@@ -1,0 +1,29 @@
+{
+  "speakers": {
+    "player": {
+      "display_name": "You",
+      "side": "player",
+      "default_portrait": "res://assets/sprites/player/player_talk.png"
+    },
+    "player_fight": {
+      "display_name": "You",
+      "side": "player",
+      "default_portrait": "res://assets/sprites/player/player_fight.png"
+    },
+    "martial_artist": {
+      "display_name": "Martial Artist",
+      "side": "npc",
+      "default_portrait": "res://assets/sprites/enemies/martial_artist_talk.png"
+    },
+    "martial_artist_battle": {
+      "display_name": "Martial Artist",
+      "side": "npc",
+      "default_portrait": "res://assets/sprites/enemies/martial_artist_fight.png"
+    },
+    "raditz": {
+      "display_name": "Raditz",
+      "side": "npc",
+      "default_portrait": "res://assets/sprites/enemies/raditz_idle.svg"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "locale": "en",
+  "entries": {
+    "dlg.martial_artist_intro.intro_1": "Hey. You move like someone who's trained hard.",
+    "dlg.martial_artist_intro.intro_2": "I train to protect people, not to show off.",
+    "dlg.martial_artist_intro.choice_accept": "I accept your spar.",
+    "dlg.martial_artist_intro.choice_training": "Only if this helps my training.",
+    "dlg.martial_artist_intro.ask_training": "A focused spar always helps.",
+    "dlg.martial_artist_intro.accept": "Good answer. Let's test your fundamentals in a spar.",
+    "dlg.raditz_intro.intro_1": "Kakarot's weakling friend? You're in my way.",
+    "dlg.raditz_intro.intro_2": "I'm done letting raiders run this place.",
+    "dlg.raditz_intro.intro_3": "Show me if you've got Saiyan blood to back that up.",
+    "dlg.raditz_intro.rematch_line": "You again? Then prove the first win wasn't luck."
+  }
+}

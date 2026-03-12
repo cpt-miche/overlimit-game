@@ -1,0 +1,101 @@
+{
+  "dialogues": {
+    "martial_artist_intro": {
+      "start": "intro_1",
+      "player_speaker_id": "player",
+      "npc_speaker_id": "martial_artist",
+      "nodes": {
+        "intro_1": {
+          "type": "line",
+          "speaker_id": "martial_artist",
+          "text_key": "dlg.martial_artist_intro.intro_1",
+          "next": "intro_2"
+        },
+        "intro_2": {
+          "type": "line",
+          "speaker_id": "player",
+          "text_key": "dlg.martial_artist_intro.intro_2",
+          "next": "intro_3"
+        },
+        "intro_3": {
+          "type": "choice",
+          "choices": [
+            {
+              "text_key": "dlg.martial_artist_intro.choice_accept",
+              "next": "accept"
+            },
+            {
+              "text_key": "dlg.martial_artist_intro.choice_training",
+              "next": "ask_training",
+              "set_flags": {
+                "took_training_path": true
+              }
+            }
+          ]
+        },
+        "ask_training": {
+          "type": "line",
+          "speaker_id": "martial_artist",
+          "text_key": "dlg.martial_artist_intro.ask_training",
+          "next": "accept"
+        },
+        "accept": {
+          "type": "line",
+          "speaker_id": "martial_artist_battle",
+          "text_key": "dlg.martial_artist_intro.accept",
+          "player_speaker_id": "player_fight",
+          "npc_speaker_id": "martial_artist_battle",
+          "next": "start_battle"
+        },
+        "start_battle": {
+          "type": "event",
+          "action": "request_battle"
+        }
+      }
+    },
+    "raditz_intro": {
+      "start": "check_victory",
+      "player_speaker_id": "player",
+      "npc_speaker_id": "raditz",
+      "nodes": {
+        "check_victory": {
+          "type": "condition",
+          "check": {
+            "kind": "prior_victory",
+            "id": "raditz_scout"
+          },
+          "true_next": "rematch_line",
+          "false_next": "intro_1"
+        },
+        "intro_1": {
+          "type": "line",
+          "speaker_id": "raditz",
+          "text_key": "dlg.raditz_intro.intro_1",
+          "next": "intro_2"
+        },
+        "intro_2": {
+          "type": "line",
+          "speaker_id": "player",
+          "text_key": "dlg.raditz_intro.intro_2",
+          "next": "intro_3"
+        },
+        "intro_3": {
+          "type": "line",
+          "speaker_id": "raditz",
+          "text_key": "dlg.raditz_intro.intro_3",
+          "next": "battle_event"
+        },
+        "rematch_line": {
+          "type": "line",
+          "speaker_id": "raditz",
+          "text_key": "dlg.raditz_intro.rematch_line",
+          "next": "battle_event"
+        },
+        "battle_event": {
+          "type": "event",
+          "action": "request_battle"
+        }
+      }
+    }
+  }
+}
