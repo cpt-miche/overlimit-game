@@ -1,5 +1,8 @@
 extends Node
 
+const DialogueRunnerScript = preload("res://scripts/dialogue/dialogue_runner.gd")
+const MainGameStateQuery = preload("res://scripts/main/main_game_state_query.gd")
+
 enum GameState {
 	WORLD,
 	DIALOGUE,
@@ -14,7 +17,7 @@ enum GameState {
 @onready var stat_label: RichTextLabel = $StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox/Stats
 @onready var rest_button: Button = $StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox/Actions/Rest
 @onready var eat_button: Button = $StatScreen/Margin/VBox/Tabs/Inventory/Margin/VBox/Actions/Eat
-@onready var dialogue_box: Node = $DialogueBox
+@onready var dialogue_box: CanvasLayer = $DialogueBox
 @onready var player_node: Node = $WorldIso/Player
 
 var enemy_map := {
@@ -27,26 +30,47 @@ var enemy_map := {
 
 var dialogue_data := {
 	&"martial_artist_intro": {
+		"start": "intro_1",
 		"npc_portrait": preload("res://assets/sprites/enemies/martial_artist_talk.png"),
-		"lines": [
-			{"speaker": "Martial Artist", "side": "npc", "text": "Hey. You move like someone who's trained hard."},
-			{"speaker": "You", "side": "player", "text": "I train to protect people, not to show off."},
-			{
+		"nodes": {
+			"intro_1": {"type": "line", "speaker": "Martial Artist", "side": "npc", "text": "Hey. You move like someone who's trained hard.", "next": "intro_2"},
+			"intro_2": {"type": "line", "speaker": "You", "side": "player", "text": "I train to protect people, not to show off.", "next": "intro_3"},
+			"intro_3": {
+				"type": "choice",
+				"choices": [
+					{"text": "I accept your spar.", "next": "accept"},
+					{"text": "Only if this helps my training.", "next": "ask_training", "set_flags": {"took_training_path": true}},
+				],
+			},
+			"ask_training": {"type": "line", "speaker": "Martial Artist", "side": "npc", "text": "A focused spar always helps.", "next": "accept"},
+			"accept": {
+				"type": "line",
 				"speaker": "Martial Artist",
 				"side": "npc",
 				"text": "Good answer. Let's test your fundamentals in a spar.",
 				"player_portrait": preload("res://assets/sprites/player/player_fight.png"),
 				"npc_portrait": preload("res://assets/sprites/enemies/martial_artist_fight.png"),
+				"next": "start_battle",
 			},
-		],
+			"start_battle": {"type": "event", "action": "request_battle"},
+		},
 	},
 	&"raditz_intro": {
+		"start": "check_victory",
 		"npc_portrait": preload("res://assets/sprites/enemies/raditz_idle.svg"),
-		"lines": [
-			{"speaker": "Raditz", "side": "npc", "text": "Kakarot's weakling friend? You're in my way."},
-			{"speaker": "You", "side": "player", "text": "I'm done letting raiders run this place."},
-			{"speaker": "Raditz", "side": "npc", "text": "Show me if you've got Saiyan blood to back that up."},
-		],
+		"nodes": {
+			"check_victory": {
+				"type": "condition",
+				"check": {"kind": "prior_victory", "id": "raditz_scout"},
+				"true_next": "rematch_line",
+				"false_next": "intro_1",
+			},
+			"intro_1": {"type": "line", "speaker": "Raditz", "side": "npc", "text": "Kakarot's weakling friend? You're in my way.", "next": "intro_2"},
+			"intro_2": {"type": "line", "speaker": "You", "side": "player", "text": "I'm done letting raiders run this place.", "next": "intro_3"},
+			"intro_3": {"type": "line", "speaker": "Raditz", "side": "npc", "text": "Show me if you've got Saiyan blood to back that up.", "next": "battle_event"},
+			"rematch_line": {"type": "line", "speaker": "Raditz", "side": "npc", "text": "You again? Then prove the first win wasn't luck.", "next": "battle_event"},
+			"battle_event": {"type": "event", "action": "request_battle"},
+		},
 	},
 }
 
@@ -55,16 +79,31 @@ var player_dialogue_portrait: Texture2D = preload("res://assets/sprites/player/p
 var active_enemy_id: StringName = &""
 var current_state: GameState = GameState.WORLD
 var pending_enemy_id: StringName = &""
+var _dialogue_runner: Node
+var _quest_flags: Dictionary = {}
+var _victories: Dictionary = {}
+var _inventory: Dictionary = {}
 
 func _ready() -> void:
 	world.encounter_requested.connect(_on_encounter_requested)
 	battle_controller.battle_finished.connect(_on_battle_finished)
 	rest_button.pressed.connect(_rest_outside_battle)
 	eat_button.pressed.connect(_eat_outside_battle)
-	dialogue_box.connect("dialogue_finished", _on_dialogue_finished)
+	dialogue_box.continue_requested.connect(_on_dialogue_continue_requested)
+	dialogue_box.choice_selected.connect(_on_dialogue_choice_selected)
+	_setup_dialogue_runner()
 	battle.visible = false
 	stat_screen.visible = false
 	_set_state(GameState.WORLD)
+
+func _setup_dialogue_runner() -> void:
+	_dialogue_runner = DialogueRunnerScript.new()
+	add_child(_dialogue_runner)
+	_dialogue_runner.line_ready.connect(_on_dialogue_line_ready)
+	_dialogue_runner.choices_ready.connect(_on_dialogue_choices_ready)
+	_dialogue_runner.dialogue_completed.connect(_on_dialogue_completed)
+	_dialogue_runner.battle_requested.connect(_on_dialogue_battle_requested)
+	_dialogue_runner.set_state_query(MainGameStateQuery.new(_quest_flags, _victories, _inventory))
 
 func _unhandled_input(event: InputEvent) -> void:
 	if current_state == GameState.DIALOGUE:
@@ -135,20 +174,44 @@ func _start_optional_dialogue(enemy_id: StringName, dialogue_key: StringName, di
 		return
 
 	var npc_portrait: Texture2D = entry.get("npc_portrait", null)
-	var lines: Array = entry.get("lines", [])
-	if npc_portrait == null or lines.is_empty():
-		lines = [{"speaker": display_name, "side": "npc", "text": "Let's settle this in battle."}]
+	if npc_portrait == null:
+		npc_portrait = player_dialogue_portrait
 
+	dialogue_box.open_dialogue(player_dialogue_portrait, npc_portrait)
 	_set_state(GameState.DIALOGUE)
-	dialogue_box.call("start_dialogue", player_dialogue_portrait, npc_portrait, lines)
+	_dialogue_runner.start(entry, {
+		"enemy_id": enemy_id,
+		"display_name": display_name,
+	})
 
-func _on_dialogue_finished() -> void:
-	if pending_enemy_id == &"":
-		_set_state(GameState.WORLD)
-		return
-	var enemy_id := pending_enemy_id
+func _on_dialogue_line_ready(line: Dictionary) -> void:
+	dialogue_box.display_line(line)
+
+func _on_dialogue_choices_ready(choices: Array) -> void:
+	dialogue_box.display_choices(choices)
+
+func _on_dialogue_continue_requested() -> void:
+	_dialogue_runner.advance()
+
+func _on_dialogue_choice_selected(choice_index: int) -> void:
+	_dialogue_runner.choose(choice_index)
+
+func _on_dialogue_battle_requested(enemy_id: StringName) -> void:
+	dialogue_box.close_dialogue()
+	var resolved_enemy_id: StringName = enemy_id
+	if resolved_enemy_id == &"":
+		resolved_enemy_id = pending_enemy_id
 	pending_enemy_id = &""
-	_start_battle(enemy_id)
+	_start_battle(resolved_enemy_id)
+
+func _on_dialogue_completed() -> void:
+	dialogue_box.close_dialogue()
+	if pending_enemy_id != &"":
+		var enemy_id := pending_enemy_id
+		pending_enemy_id = &""
+		_start_battle(enemy_id)
+		return
+	_set_state(GameState.WORLD)
 
 func _start_battle(enemy_id: StringName) -> void:
 	active_enemy_id = enemy_id
@@ -160,6 +223,7 @@ func _start_battle(enemy_id: StringName) -> void:
 func _on_battle_finished(result: String) -> void:
 	_set_state(GameState.WORLD)
 	if result == "player" and active_enemy_id != &"":
+		_victories[active_enemy_id] = true
 		world.mark_enemy_defeated(active_enemy_id)
 	active_enemy_id = &""
 	if stat_screen.visible:
