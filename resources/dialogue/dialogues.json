@@ -8,49 +8,78 @@
         "intro_1": {
           "type": "line",
           "speaker_id": "martial_artist",
-          "text_key": "dlg.martial_artist_intro.intro_1",
+          "text": "Koga! Good to see you.",
           "next": "intro_2"
         },
         "intro_2": {
           "type": "line",
           "speaker_id": "player",
-          "text_key": "dlg.martial_artist_intro.intro_2",
+          "text": "You as well.",
           "next": "intro_3"
         },
         "intro_3": {
+          "type": "line",
+          "speaker_id": "martial_artist",
+          "text": "I've heard you've been training under Master Moku for some time now.",
+          "next": "intro_4"
+        },
+        "intro_4": {
+          "type": "line",
+          "speaker_id": "player",
+          "text": "Yup! He's really been beating me up.",
+          "next": "intro_5"
+        },
+        "intro_5": {
+          "type": "line",
+          "speaker_id": "martial_artist",
+          "text": "Is that so? Because I've heard he's been going easy on you. I guess the old man's going soft.",
+          "next": "intro_6"
+        }
+        "intro_6": {
+          "type": "line",
+          "speaker_id": "player",
+          "text": "What!? No way, I've got the full boot camp treatment! My foot's still sore from the pubble-under-the-heel balance-training.",
+          "next": "intro_7"
+        },
+        "intro_7": {
+          "type": "line",
+          "speaker_id": "martial_artist_fight",
+          "text": "Hah, that old trick? I'll tell you what. Prove to me that your training has paid off, and I'll cut you some slack. Spar with me!",
+          "next": "intro_8"
+        },
+        "intro_8": {
           "type": "choice",
           "choices": [
             {
-              "text_key": "dlg.martial_artist_intro.choice_accept",
+              "text": "If that's how you want to play! Fine, it's on!",
               "next": "accept"
             },
             {
-              "text_key": "dlg.martial_artist_intro.choice_training",
-              "next": "ask_training",
-              "set_flags": {
-                "took_training_path": true
-              }
+              "text_key": "No, not right now",
+              "next": "decline_training",
             }
           ]
         },
-        "ask_training": {
+        "decline_training": {
           "type": "line",
           "speaker_id": "martial_artist",
-          "text_key": "dlg.martial_artist_intro.ask_training",
-          "next": "accept"
+          "text_key": "Well then, come back when you're ready to spar.",
+          "next": "leave"
         },
         "accept": {
           "type": "line",
           "speaker_id": "martial_artist_battle",
-          "text_key": "dlg.martial_artist_intro.accept",
+          "text": "Alright lets go! Kyahh!",
           "player_speaker_id": "player_fight",
-          "npc_speaker_id": "martial_artist_battle",
+          "npc_speaker_id": "martial_artist_fight",
           "next": "start_battle"
         },
         "start_battle": {
           "type": "event",
           "action": "request_battle"
         }
+        "leave": {
+          "type": "end"
       }
     },
     "raditz_intro": {
