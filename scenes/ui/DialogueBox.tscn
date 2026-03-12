@@ -15,7 +15,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="PlayerPortrait" type="TextureRect" parent="Portraits"]
-custom_minimum_size = Vector2(260, 320)
+custom_minimum_size = Vector2(360, 460)
 layout_mode = 0
 offset_left = 28.0
 offset_top = 132.0
@@ -25,7 +25,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="NpcPortrait" type="TextureRect" parent="Portraits"]
-custom_minimum_size = Vector2(260, 320)
+custom_minimum_size = Vector2(360, 460)
 layout_mode = 0
 offset_left = 992.0
 offset_top = 132.0
