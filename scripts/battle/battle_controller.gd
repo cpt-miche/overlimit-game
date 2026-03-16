@@ -171,17 +171,15 @@ func _can_enemy_use_action(action_id: StringName, action_infusion: float) -> boo
 		return next_form != null and next_form.can_activate(state.enemy)
 	if action_id == &"shuten_gate_1" or action_id == &"shuten_gate_2" or action_id == &"shuten_gate_3":
 		if not state.enemy.has_utility_skill(&"shuten") or not state.enemy.has_transformation_skill(action_id):
-	if action_id == &"enrage":
-		if not state.enemy.has_utility_skill(&"enrage"):
-			return false
-		return state.enemy.enrage_turns_remaining <= 0 and state.enemy.exhausted_turns_remaining <= 0
-	if action_id == &"shuten_gate_1":
-		if not state.enemy.has_utility_skill(&"shuten") or not state.enemy.has_transformation_skill(&"shuten_gate_1"):
 			return false
 		if state.enemy.form_level > 0 or state.enemy.active_shuten_transformation_id == action_id:
 			return false
 		var shuten: TransformationDef = transformations.get(action_id, null)
 		return shuten != null and shuten.can_activate(state.enemy)
+	if action_id == &"enrage":
+		if not state.enemy.has_utility_skill(&"enrage"):
+			return false
+		return state.enemy.enrage_turns_remaining <= 0 and state.enemy.exhausted_turns_remaining <= 0
 	return false
 
 func _process_action(actor: FighterStats, target: FighterStats, action_id: StringName, action_infusion: float) -> bool:
